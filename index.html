@@ -291,28 +291,45 @@ function rataRata_byName(nama,thr=0.85){
 }
 
 // ==== Render tabel ====
-function renderTable(results){
-  const tbody=document.querySelector("#resultTable tbody");
-  tbody.innerHTML="";
-  results.forEach((item,index)=>{
-    const {k,res}=item;
-    const avg=res.avg!==null?(Math.round(res.avg*100)/100).toFixed(2):"-";
-    const highlightClass = res.slaCount > 0 ? "table-danger" : "";
-    const tr=document.createElement("tr");
-    tr.className = highlightClass;
-    tr.innerHTML=`
-      <td>${index+1}</td>
-      <td>${k.nama}</td>
+// ==== Render tabel (versi dengan label P1 & warna khusus) ====
+function renderTable(results) {
+  const tbody = document.querySelector("#resultTable tbody");
+  tbody.innerHTML = "";
+
+  results.forEach((item, index) => {
+    const { k, res } = item;
+    const avg = res.avg !== null ? (Math.round(res.avg * 100) / 100).toFixed(2) : "-";
+
+    // Warna baris merah kalau ada SLA lewat
+    let rowClass = res.slaCount > 0 ? "table-danger" : "";
+
+    // Tambahkan warna biru muda untuk shift P1
+    if (k.shift === "P1") {
+      rowClass = "table-info";
+    }
+
+    // Nama tampil + label P1 bila perlu
+    const namaTampil = (k.shift === "P1") ? `${k.nama} (P1)` : k.nama;
+
+    const tr = document.createElement("tr");
+    tr.className = rowClass;
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${namaTampil}</td>
       <td>${k.shift}</td>
       <td>${res.lastTime}</td>
       <td>${avg}</td>
-      <td>${res.count||0}</td>
-      <td>${res.slaCount||0}</td>
-      <td>${res.inProgressCount||0}</td>
-      <td>${res.relasiResolved||0}</td>`;
+      <td>${res.count || 0}</td>
+      <td>${res.slaCount || 0}</td>
+      <td>${res.inProgressCount || 0}</td>
+      <td>${res.relasiResolved || 0}</td>
+    `;
+
     tbody.appendChild(tr);
   });
 }
+
 
 // ==== Generate tabel ====
 document.getElementById("generateBtn").addEventListener("click",()=>{
@@ -369,3 +386,4 @@ document.getElementById("downloadBtn").addEventListener("click",async()=>{
 </script>
 </body>
 </html>
+
