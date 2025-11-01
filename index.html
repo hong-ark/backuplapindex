@@ -189,6 +189,8 @@ document.getElementById("ambilNamaBtn").addEventListener("click", async () => {
   const shiftInput = document.getElementById("shiftInput").value.trim().toUpperCase();
   if (!shiftInput) return alert("Masukkan shift (M, P, atau S)");
   document.getElementById("statusText").textContent = "Mengambil data dari Google Sheet...";
+  console.log("Data shift dari GSheet:", sheetData);
+
 
   try {
     let shifts = [shiftInput];
@@ -386,4 +388,5 @@ document.getElementById("downloadBtn").addEventListener("click",async()=>{
 </script>
 </body>
 </html>
+
 
