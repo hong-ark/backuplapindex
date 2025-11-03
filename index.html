@@ -3,223 +3,556 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Laporan Index Shift</title>
+  <title>Laporan Index Shift + Rangkuman Lewat SLA</title>
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- PapaParse (CSV) -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- html2canvas (download JPG) -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- SheetJS (untuk buat XLSX lokal) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-  body {
-    background: #f6f7fb;
-    padding: 20px;
-  }
+    body { background: #f6f7fb; padding: 20px; }
+    .container { max-width: 1200px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 
-  .container {
-    max-width: 1100px;
-    background: white;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
+    /* Tabel utama (index) */
+    #resultTable.table thead tr th,
+    #slaTable.table thead tr th {
+      background-color: #1976d2 !important; /* Biru */
+      color: white !important;              /* Font putih */
+      text-align: center;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 10px;
+      user-select: none;
+      vertical-align: middle;
+      border-color: #1565c0 !important;
+    }
+    #resultTable td, #slaTable td { text-align: center; vertical-align: middle; font-size: 0.95rem; }
+    #resultTable th:hover, #slaTable th:hover { background-color: #1565c0 !important; }
 
-  #resultTable thead {
-    background-color: #1976d2;
-    color: white;
-  }
+    .table-danger { background-color: #ffeaea !important; }
 
-  #resultTable th {
-    text-align: center;
-    font-weight: 700;
-    cursor: pointer;
-    border-bottom: 2px solid #bbdefb;
-  }
+    /* layout dua panel (index + SLA) */
+    .two-col { display: grid; grid-template-columns: 1fr; gap: 18px; }
+    @media(min-width:1100px){ .two-col { grid-template-columns: 1fr 520px; } }
 
-  #resultTable td {
-    text-align: center;
-    vertical-align: middle;
-  }
-
-  .table-danger {
-    background-color: #ffeaea !important;
-  }
+    .small-muted { font-size: 0.86rem; color: #666; }
   </style>
 </head>
-
 <body>
   <div class="container">
     <h4><b>Laporan Index Shift</b></h4>
-    <p>Ambil nama dari GSheet → Upload CSV → Generate tabel → Upload ke Drive.</p>
+    <p class="small-muted">Input shift → Ambil nama dari GSheet → Upload CSV → Generate Tabel. Di kanan: ringkasan Lewat SLA.</p>
 
-    <div class="row mb-3">
-      <div class="col-md-3">
+    <div class="row g-2 align-items-end mb-2">
+      <div class="col-md-2">
         <label class="form-label">Shift</label>
         <select id="shiftInput" class="form-select">
           <option value="">Pilih Shift</option>
-          <option value="P">P (Pagi)</option>
-          <option value="S">S (Siang)</option>
           <option value="M">M (Malam)</option>
           <option value="MH1">M H-1 (Malam H-1)</option>
+          <option value="S">S (Siang)</option>
+          <option value="P">P (Pagi)</option>
         </select>
       </div>
-      <div class="col-md-4 align-self-end">
-        <button id="ambilNamaBtn" class="btn btn-primary w-100">Ambil Nama dari GSheet</button>
+
+      <div class="col-md-4">
+        <label class="form-label">&nbsp;</label><br />
+        <button id="ambilNamaBtn" class="btn btn-primary">Ambil Nama dari GSheet</button>
       </div>
-      <div class="col-md-5 text-end">
-        <label class="form-label">Tanggal yang dicek:</label>
-        <p id="tanggalCek"></p>
+
+      <div class="col-md-3">
+        <label class="form-label">Upload CSV</label>
+        <input type="file" id="csvFile" class="form-control" accept=".csv" />
+        <div class="small-muted">CSV separator ; (semicolon). Header fleksibel, script akan mencari kolom berdasarkan nama.</div>
+      </div>
+
+      <div class="col-md-3 text-end">
+        <label class="form-label">Tanggal dicek:</label>
+        <p id="tanggalCek" class="mb-1"></p>
+        <button id="generateBtn" class="btn btn-success" disabled>Generate Tabel</button>
+        <button id="downloadBtn" class="btn btn-outline-primary">Download JPG</button>
       </div>
     </div>
 
-    <hr />
+    <div id="statusText" class="mb-2 text-muted"></div>
 
-    <div class="mb-3">
-      <label for="csvFile" class="form-label">Upload file CSV dari WEB CO</label>
-      <input type="file" id="csvFile" class="form-control" accept=".csv" />
-    </div>
+    <div class="two-col">
+      <!-- Bagian kiri: laporan index -->
+      <div>
+        <table id="resultTable" class="table table-bordered table-striped mb-3">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th id="sortNama">Nama Karyawan</th>
+              <th>Shift</th>
+              <th id="sortLastCO">LastCO</th>
+              <th id="sortIndexCO">IndexCO</th>
+              <th id="sortTotalCO">TotalCO</th>
+              <th id="sortSLA">SLA</th>
+              <th id="sortInProgress">InProgress</th>
+              <th id="sortRelasiResolved">RelasiResolved</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
-    <button id="generateBtn" class="btn btn-success mb-3" disabled>Generate Tabel</button>
-    <span id="statusText" class="ms-2 text-muted"></span>
+      <!-- Bagian kanan: rangkuman Lewat SLA -->
+      <div>
+        <h6><b>Rangkuman: Lewat SLA (Tipe Lokasi = Store)</b></h6>
+        <div class="small-muted mb-2">Tabel ini dibuat otomatis dari CSV yang di-upload. Klik Download XLSX untuk menyimpan atau Upload ke GSheet untuk mengirim rangkuman ke Google Spreadsheet.</div>
 
-    <div id="resultArea" class="mt-4">
-      <table id="resultTable" class="table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th id="sortNama">Nama Karyawan</th>
-            <th>Shift</th>
-            <th id="sortLastCO">LastCO</th>
-            <th id="sortIndexCO">IndexCO</th>
-            <th id="sortTotalCO">TotalCO</th>
-            <th id="sortSLA">SLA</th>
-            <th id="sortInProgress">InProgress</th>
-            <th id="sortRelasiResolved">RelasiResolved</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+        <table id="slaTable" class="table table-bordered table-sm mb-2">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Kategori Masalah</th>
+              <th>Masalah</th>
+              <th>Tanggal</th>
+              <th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
 
-    <div class="text-end mt-3">
-      <button id="uploadDriveBtn" class="btn btn-warning">Upload ke Drive</button>
-      <button id="downloadXlsxBtn" class="btn btn-outline-primary">Download XLSX</button>
+        <div class="d-grid gap-2 d-md-flex justify-content-end">
+          <button id="downloadSlaXlsxBtn" class="btn btn-success">Download XLSX Rangkuman</button>
+          <button id="uploadToGsheetBtn" class="btn btn-outline-secondary">Upload ke GSheet</button>
+        </div>
+
+        <div id="uploadResult" class="mt-2 small-muted"></div>
+      </div>
     </div>
   </div>
 
 <script>
+/* ===========================
+   KONFIGURASI (sesuaikan bila perlu)
+   =========================== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzR5FqFZM_G3XcPFeurBRFMrU-NNqxMW2ZtSCRIpESCpC4Nz7VzdKRmt-Zx1rJXjnRd-g/exec";
+// Jika Anda punya Apps Script web-app untuk menerima rangkuman dan menuliskannya ke spreadsheet,
+// masukkan URL web-appnya di bawah. Jika kosong, tombol Upload ke GSheet akan menampilkan instruksi.
+const GAS_UPLOAD_URL = ""; // contoh: "https://script.google.com/macros/s/.../exec"
+// Target spreadsheet ID (Anda kirimkan sebelumnya)
+const TARGET_SPREADSHEET_ID = "1vuQ8_YhN0P4mf8XBo22RSeAaXtGPHhjMHhVriSqaJIM";
+// Nama sheet tujuan di spreadsheet untuk menyimpan rangkuman Lewat SLA
+const TARGET_SHEET_NAME = "Rangkuman_Lewat_SLA";
 
+/* ===========================
+   STATE
+   =========================== */
 let sheetData = [];
 let csvData = [];
+let lastResults = [];
 
-// === Ambil nama dari GSheet ===
+/* ===========================
+   UI: tanggal cek
+   =========================== */
+document.getElementById("tanggalCek").textContent =
+  new Date().toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
+
+/* ===========================
+   UTIL & fungsi asli tetap utuh
+   =========================== */
+function normKey(s){ return (s||"").toString().toLowerCase().replace(/[^a-z0-9]/g,''); }
+function normalizeName(s){ return (s||"").toString().toLowerCase().replace(/\s+/g,' ').replace(/[^\w\s]/g,'').trim(); }
+
+function durasiKeDetik(v){
+  if (!v) return 0;
+  const s = v.toString().trim();
+  const m1 = s.match(/(\d+)\s*d\s*(\d{1,2}):(\d{2}):(\d{2})$/i) || s.match(/(\d+)\s*d\s*(\d{1,2}):(\d{2}):(\d{2})/i);
+  if (m1) return (+m1[1])*86400 + (+m1[2])*3600 + (+m1[3])*60 + (+m1[4]);
+  const m2 = s.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+  if (m2) return (+m2[1])*3600 + (+m2[2])*60 + (+m2[3]);
+  return 0;
+}
+
+function normalizeStatus(s){
+  if (!s && s !== 0) return "";
+  return String(s).replace(/\u00A0/g,' ').replace(/[_\-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+}
+function isAcceptedStatus(norm){
+  return norm.includes("resolved") || norm.includes("closed") ||
+         norm.includes("inprogress") || norm.includes("in progress") ||
+         norm.includes("pending");
+}
+
+function levenshtein(a,b){
+  a=a||""; b=b||"";
+  const al=a.length, bl=b.length;
+  if(!al)return bl; if(!bl)return al;
+  const dp=Array.from({length:al+1},()=>new Array(bl+1).fill(0));
+  for(let i=0;i<=al;i++)dp[i][0]=i;
+  for(let j=0;j<=bl;j++)dp[0][j]=j;
+  for(let i=1;i<=al;i++)
+    for(let j=1;j<=bl;j++)
+      dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return dp[al][bl];
+}
+function similarity(a,b){
+  a=normalizeName(a); b=normalizeName(b);
+  if(!a||!b)return 0;
+  const d=levenshtein(a,b);
+  return 1 - d/Math.max(a.length,b.length);
+}
+function ambilJamDariTanggal(s){
+  if(!s)return "-";
+  const m=s.match(/(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2,'0')}:${m[2]}` : "-";
+}
+
+/* ===========================
+   Ambil nama dari GSheet (tetap pakai GAS_URL yang sudah berfungsi)
+   - untuk MH1, server-side GAS sudah menangani H-1 (kami hanya memanggil shift)
+   =========================== */
 document.getElementById("ambilNamaBtn").addEventListener("click", async () => {
-  const shift = document.getElementById("shiftInput").value.trim().toUpperCase();
-  if (!shift) return alert("Pilih shift terlebih dahulu!");
+  const shiftInput = document.getElementById("shiftInput").value.trim().toUpperCase();
+  if (!shiftInput) return alert("Pilih shift dulu!");
+  document.getElementById("statusText").textContent = "Mengambil data dari GSheet...";
 
-  document.getElementById("statusText").textContent = "Mengambil data dari Google Sheet...";
   try {
-    let tanggal;
+    // tampilkan tanggal label lokal (MH1 -> hari kemarin)
     const now = new Date();
-    if (shift === "MH1") {
-      const y = new Date();
-      y.setDate(now.getDate() - 1);
-      tanggal = `${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,'0')}-${String(y.getDate()).padStart(2,'0')}`;
+    let tanggalLabel;
+    if (shiftInput === "MH1") {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      tanggalLabel = y.toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
     } else {
-      tanggal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      tanggalLabel = now.toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
     }
+    document.getElementById("tanggalCek").textContent = tanggalLabel;
 
-    const url = `${GAS_URL}?shift=${encodeURIComponent(shift)}&tanggal=${encodeURIComponent(tanggal)}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    let shifts = [shiftInput];
+    if (shiftInput === "P") shifts = ["P","P1"];
 
-    if (!data.ok) throw new Error(data.error || "Gagal mengambil data");
+    sheetData = [];
+    for (const s of shifts) {
+      const url = `${GAS_URL}?shift=${encodeURIComponent(s)}`; // GAS menangani tanggal/H-1
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Gagal ambil data GSheet");
+      const list = (data.karyawan || []).map(k => ({
+        nama: (k.nama || "").trim(),
+        nik: (k.nik || "").trim(),
+        shift: (k.shift || s).trim()
+      }));
+      sheetData = sheetData.concat(list);
+    }
+    // unique nama
+    sheetData = sheetData.filter((obj, idx, arr) => idx === arr.findIndex(t => t.nama === obj.nama));
 
-    sheetData = data.karyawan || [];
-    document.getElementById("tanggalCek").textContent = new Date(tanggal).toLocaleDateString("id-ID", {
-      day: "numeric", month: "long", year: "numeric"
-    });
-    document.getElementById("statusText").textContent = `✅ ${sheetData.length} nama berhasil diambil.`;
-    document.getElementById("generateBtn").disabled = false;
-  } catch (err) {
-    alert("Gagal mengambil data: " + err.message);
+    document.getElementById("generateBtn").disabled = !sheetData.length;
+    document.getElementById("statusText").textContent = `✅ ${sheetData.length} nama berhasil diambil (Shift ${shiftInput}).`;
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById("statusText").textContent = "❌ Gagal mengambil data dari GSheet: " + err.message;
+    alert("Gagal mengambil data: "+err.message);
   }
 });
 
-// === Upload CSV ===
-document.getElementById("csvFile").addEventListener("change", (e) => {
+/* ===========================
+   LOAD CSV: cari kolom header fleksibel
+   - juga simpan kolom: tipeLokasi, kategori masalah, masalah (untuk rangkuman)
+   =========================== */
+document.getElementById("csvFile").addEventListener("change",(e)=>{
   const file = e.target.files[0];
-  if (!file) return;
-  Papa.parse(file, {
+  if(!file) return;
+  Papa.parse(file,{
     header: true,
     delimiter: ";",
     skipEmptyLines: true,
     complete: (res) => {
-      csvData = res.data;
-      document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
+      const headerMap = {};
+      (res.meta.fields || []).forEach(f => { headerMap[normKey(f)] = f; });
+
+      const findCol = (row, candidates) => {
+        for(const c of candidates){
+          const key = Object.keys(headerMap).find(k => k.includes(c));
+          if (key) {
+            const real = headerMap[key];
+            if(row[real] !== undefined) return row[real].toString();
+          }
+        }
+        return "";
+      };
+
+      csvData = res.data.map(r => {
+        const nikRaw = (findCol(r, ['nikpengambil','nik'])).replace(/\D/g,'').trim();
+        const diambilOleh = findCol(r, ['diambiloleh','diambil oleh','diambil']);
+        const durasiRaw = findCol(r, ['durasikomplain','durasi']);
+        const waktuSlaRaw = findCol(r, ['waktusla','waktu sla']);
+        const statusRaw = findCol(r, ['statuskomplain','status']);
+        const statusSlaRaw = findCol(r, ['statussla','status sla']);
+        const tglDiambilRaw = findCol(r, ['tanggaldiambil','tgl diambil','tanggal diambil','tanggal']);
+        const tipeLokasiRaw = findCol(r, ['tipelokasiasal','tipe lokasi asal','tipe lokasi']);
+        const kategoriRaw = findCol(r, ['kategorimasalah','kategori masalah','kategori']);
+        const masalahRaw = findCol(r, ['masalah','issue','problem','keterangan']);
+        const lokasiAsalRaw = findCol(r, ['lokasiasal','lokasi asal']); // kept if present
+
+        const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
+
+        return {
+          rawRow: r,
+          nik: nikRaw,
+          diambilOleh,
+          durasiRaw,
+          durasiDetik: durasiKeDetik(durasiRaw),
+          waktuSlaDetik: slaNum*3600,
+          status: statusRaw,
+          statusNorm: normalizeStatus(statusRaw),
+          statusSLA: statusSlaRaw,
+          tanggalDiambil: tglDiambilRaw,
+          tipeLokasi: (tipeLokasiRaw || "").trim(),
+          kategoriMasalah: (kategoriRaw || "").trim(),
+          masalah: (masalahRaw || "").trim(),
+          lokasiAsal: (lokasiAsalRaw || "").trim()
+        };
+      });
+
+      document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris. Rangkuman Lewat SLA akan dibuat otomatis.`;
+      // segera buat rangkuman SLA (otomatis)
+      buildSlaSummary();
     }
   });
 });
 
-// === Generate Tabel ===
-document.getElementById("generateBtn").addEventListener("click", () => {
-  if (!sheetData.length || !csvData.length) return alert("Pastikan nama GSheet & CSV sudah diambil!");
+/* ===========================
+   Perhitungan (tetap utuh)
+   =========================== */
+function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik/r.waktuSlaDetik : 0; }
 
-  const tbody = document.querySelector("#resultTable tbody");
-  tbody.innerHTML = "";
+function rataRata_byName(nama,thr=0.85){
+  const matches=[];
+  for(const r of csvData){
+    if(!isAcceptedStatus(r.statusNorm)) continue;
+    // skip tipe lokasi 'branch'
+    if (r.tipeLokasi && r.tipeLokasi.trim().toLowerCase() === "branch") continue;
+    if(similarity(nama, r.diambilOleh) >= thr) matches.push(r);
+  }
+  if(!matches.length)
+    return { avg:null, count:0, lastTime:"-", slaCount:0, inProgressCount:0, relasiResolved:0 };
 
-  sheetData.forEach((p, i) => {
-    const baris = document.createElement("tr");
-    baris.innerHTML = `
-      <td>${i+1}</td>
-      <td>${p.nama}</td>
-      <td>${p.shift}</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>`;
-    tbody.appendChild(baris);
-  });
+  const sum = matches.reduce((a,b)=>a+computeC(b),0);
+  const latest = matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
 
-  document.getElementById("statusText").textContent = "✅ Tabel berhasil digenerate.";
+  return {
+    avg: sum/matches.length,
+    count: matches.length,
+    lastTime: ambilJamDariTanggal(latest),
+    slaCount: matches.filter(r=>r.statusSLA && r.statusSLA.toLowerCase().includes("lewat")).length,
+    inProgressCount: matches.filter(r=>r.statusNorm.includes("inprogress") || r.statusNorm.includes("in progress")).length,
+    relasiResolved: matches.filter(r=>r.statusNorm.includes("pending")).length
+  };
+}
+
+/* ===========================
+   Generate tabel index (tetap)
+   =========================== */
+document.getElementById("generateBtn").addEventListener("click", ()=>{
+  if(!sheetData.length) return alert("Ambil nama dari GSheet dulu.");
+  if(!csvData.length) return alert("Upload file CSV dulu.");
+  const results = sheetData.map(k => ({ k, res: rataRata_byName(k.nama) }));
+  lastResults = results;
+  renderTable(results);
+  document.getElementById("statusText").textContent = "✅ Perhitungan selesai.";
 });
 
-// === Upload ke Drive ===
-document.getElementById("uploadDriveBtn").addEventListener("click", async () => {
-  const dataFilter = csvData.filter(x =>
-    (x["Status SLA"] || "").toLowerCase().includes("lewat") &&
-    (x["Tipe Lokasi Asal"] || "").toLowerCase() === "store"
-  );
-  if (!dataFilter.length) {
-    alert("Tidak ada data Lewat SLA (Store) untuk diupload.");
+function renderTable(results){
+  const tbody = document.querySelector("#resultTable tbody");
+  tbody.innerHTML = "";
+  results.forEach((item, index) => {
+    const { k, res } = item;
+    const avg = res.avg!==null ? (Math.round(res.avg*100)/100).toFixed(2) : "-";
+    const tr = document.createElement("tr");
+    if(res.slaCount>0) tr.className = "table-danger";
+    tr.innerHTML = `
+      <td>${index+1}</td>
+      <td>${k.nama}</td>
+      <td>${k.shift}</td>
+      <td>${res.lastTime}</td>
+      <td>${avg}</td>
+      <td>${res.count||0}</td>
+      <td>${res.slaCount||0}</td>
+      <td>${res.inProgressCount||0}</td>
+      <td>${res.relasiResolved||0}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===========================
+   Rangkuman Lewat SLA (baru)
+   - filter: statusSLA contains "lewat" AND tipeLokasi == "store"
+   - group by Kategori Masalah + Masalah + Tanggal
+   - show table and prepare rows for XLSX/upload
+   =========================== */
+let slaSummaryRows = []; // array of {kategori, masalah, tanggal, total}
+
+function buildSlaSummary(){
+  // produce grouping map
+  const map = new Map();
+  for(const r of csvData){
+    // filter
+    if(!r.statusSLA) continue;
+    if(!(String(r.statusSLA).toLowerCase().includes("lewat"))) continue;
+    if(!r.tipeLokasi) continue;
+    if(String(r.tipeLokasi).trim().toLowerCase() !== "store") continue;
+
+    // tanggal normalize: keep as-is (user CSV date). We'll display as-is.
+    const tgl = (r.tanggalDiambil || "").trim() || "-";
+
+    const kategori = r.kategoriMasalah || "-";
+    const masalah = r.masalah || "-";
+    const key = `${kategori}||${masalah}||${tgl}`;
+
+    if(!map.has(key)) map.set(key, { kategori, masalah, tanggal: tgl, total: 0 });
+    map.get(key).total += 1; // count occurrence (grand total)
+  }
+
+  // convert to array and sort by total desc then kategori
+  slaSummaryRows = Array.from(map.values()).sort((a,b)=> b.total - a.total || a.kategori.localeCompare(b.kategori));
+
+  // render into slaTable
+  const tbody = document.querySelector("#slaTable tbody");
+  tbody.innerHTML = "";
+  slaSummaryRows.forEach((row, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td style="text-align:left">${row.kategori}</td>
+      <td style="text-align:left">${row.masalah}</td>
+      <td>${row.tanggal}</td>
+      <td>${row.total}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // enable download/upload buttons depending on presence
+  document.getElementById("downloadSlaXlsxBtn").disabled = slaSummaryRows.length === 0;
+  document.getElementById("uploadToGsheetBtn").disabled = slaSummaryRows.length === 0;
+}
+
+/* ===========================
+   Download XLSX Rangkuman (local) using SheetJS
+   - filename: Rangkuman_Lewat_SLA_YYYYMMDD.xlsx
+   =========================== */
+document.getElementById("downloadSlaXlsxBtn").addEventListener("click", ()=>{
+  if(!slaSummaryRows.length) return alert("Tidak ada data Lewat SLA untuk didownload.");
+
+  // build worksheet rows (header + data)
+  const ws_data = [
+    ["No", "Kategori Masalah", "Masalah", "Tanggal", "Grand Total"]
+  ];
+  slaSummaryRows.forEach((r, i) => {
+    ws_data.push([i+1, r.kategori, r.masalah, r.tanggal, r.total]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  XLSX.utils.book_append_sheet(wb, ws, "Rangkuman_Lewat_SLA");
+
+  const now = new Date();
+  const fname = `Rangkuman_Lewat_SLA_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+
+  XLSX.writeFile(wb, fname);
+});
+
+/* ===========================
+   Upload rangkuman ke Google Spreadsheet via Apps Script webapp
+   - This requires you deploy Apps Script web app that accepts POST JSON:
+     { spreadsheetId, sheetName, rows: [ [No, Kategori, Masalah, Tanggal, Total], ... ] }
+   - If GAS_UPLOAD_URL is blank, show instructions instead.
+   =========================== */
+document.getElementById("uploadToGsheetBtn").addEventListener("click", async ()=>{
+  if(!slaSummaryRows.length) return alert("Tidak ada data Lewat SLA untuk diupload.");
+
+  if(!GAS_UPLOAD_URL){
+    document.getElementById("uploadResult").textContent = "GAS_UPLOAD_URL kosong — masukkan URL Apps Script web-app yang menulis ke spreadsheet, atau gunakan tombol Download XLSX.";
     return;
   }
 
-  const payload = {
-    tanggal: new Date().toISOString().split('T')[0],
-    data: dataFilter
-  };
+  document.getElementById("uploadResult").textContent = "Mengupload ke GSheet...";
+  const payloadRows = slaSummaryRows.map((r,i) => [i+1, r.kategori, r.masalah, r.tanggal, r.total]);
 
-  document.getElementById("statusText").textContent = "📤 Mengunggah data rangkuman ke Drive...";
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  const hasil = await res.json();
-  if (hasil.ok) {
-    document.getElementById("statusText").textContent = `✅ ${hasil.added} baris rangkuman diunggah ke Drive.`;
-  } else {
-    document.getElementById("statusText").textContent = `⚠️ Gagal: ${hasil.error}`;
+  try{
+    const res = await fetch(GAS_UPLOAD_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({
+        spreadsheetId: TARGET_SPREADSHEET_ID,
+        sheetName: TARGET_SHEET_NAME,
+        rows: payloadRows
+      })
+    });
+    const data = await res.json();
+    if(!data || !data.ok){
+      throw new Error(data && data.error ? data.error : "Gagal, respons bukan OK");
+    }
+    document.getElementById("uploadResult").textContent = `✅ Upload selesai. ${data.writtenRows||payloadRows.length} baris tersimpan di spreadsheet.`;
+  }catch(err){
+    console.error(err);
+    document.getElementById("uploadResult").textContent = "❌ Upload gagal: " + err.message;
+    alert("Upload gagal: " + err.message);
   }
 });
 
-// === Download XLSX (dari Spreadsheet) ===
-document.getElementById("downloadXlsxBtn").addEventListener("click", () => {
-  const FILE_ID = "ID_SPREADSHEET_RANGKUMAN_SLA"; // ← ganti dengan ID Spreadsheet rangkumanmu
-  const exportUrl = `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx`;
-  window.open(exportUrl, "_blank");
+/* ===========================
+   Sorting (header click) — gunakan fungsi sortColumn seperti dulu
+   =========================== */
+let sortAscNama = true;
+let sortAscLastCO = false;
+let sortAscIndexCO = false;
+let sortAscTotalCO = true;
+let sortAscSLA = false;
+let sortAscInProgress = false;
+let sortAscRelasiResolved = false;
+
+function sortColumn(key){
+  if(!lastResults || !lastResults.length) return alert("Belum ada data tabel.");
+  let asc; let valFunc;
+  switch(key){
+    case "Nama": asc = sortAscNama; valFunc = r => (r.k.nama||"").toLowerCase(); sortAscNama = !sortAscNama; break;
+    case "LastCO": asc = sortAscLastCO; valFunc = r => r.res.lastTime==="-" ? 0 : parseInt(r.res.lastTime.replace(":","")); sortAscLastCO = !sortAscLastCO; break;
+    case "IndexCO": asc = sortAscIndexCO; valFunc = r => r.res.avg!==null ? r.res.avg : 0; sortAscIndexCO = !sortAscIndexCO; break;
+    case "TotalCO": asc = sortAscTotalCO; valFunc = r => r.res.count||0; sortAscTotalCO = !sortAscTotalCO; break;
+    case "SLA": asc = sortAscSLA; valFunc = r => r.res.slaCount||0; sortAscSLA = !sortAscSLA; break;
+    case "InProgress": asc = sortAscInProgress; valFunc = r => r.res.inProgressCount||0; sortAscInProgress = !sortAscInProgress; break;
+    case "RelasiResolved": asc = sortAscRelasiResolved; valFunc = r => r.res.relasiResolved||0; sortAscRelasiResolved = !sortAscRelasiResolved; break;
+    default: return;
+  }
+
+  if(key === "Nama"){
+    lastResults.sort((a,b)=> asc ? valFunc(a).localeCompare(valFunc(b)) : valFunc(b).localeCompare(valFunc(a)));
+  } else {
+    lastResults.sort((a,b)=> asc ? (valFunc(a)-valFunc(b)) : (valFunc(b)-valFunc(a)));
+  }
+  renderTable(lastResults);
+  const el = document.getElementById(`sort${key}`);
+  if(el) el.textContent = `${key} ${asc?"↑":"↓"}`;
+}
+
+["Nama","LastCO","IndexCO","TotalCO","SLA","InProgress","RelasiResolved"].forEach(k=>{
+  const el = document.getElementById(`sort${k}`);
+  if(el) el.addEventListener("click", ()=>sortColumn(k));
+});
+
+/* ===========================
+   Download JPG dari area kiri+kanan (whole container)
+   =========================== */
+document.getElementById("downloadBtn").addEventListener("click", async ()=>{
+  const area = document.querySelector(".container");
+  const canvas = await html2canvas(area, { scale: 2 });
+  const link = document.createElement("a");
+  link.download = "Laporan_Index_Shift.jpg";
+  link.href = canvas.toDataURL("image/jpeg");
+  link.click();
 });
 </script>
 </body>
