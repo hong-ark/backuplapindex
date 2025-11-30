@@ -229,7 +229,7 @@ async function saveHistoryEntry(entry){
       count: x.res?.count ?? 0,
       lastTime: x.res?.lastTime ?? "-",
       slaCount: x.res?.slaCount ?? 0,
-      durasiSLA: x.res?.durasiSLA || "",
+      durasiSLA: (x.res?.durasiSLA !== undefined && x.res?.durasiSLA !== null) ? x.res.durasiSLA : "-",
       inProgressCount: x.res?.inProgressCount ?? 0,
       relasiResolved: x.res?.relasiResolved ?? 0
     }
@@ -270,7 +270,7 @@ async function renderHistoryList(){
       const modeLabel = (h.mode==="IDX") ? "Index hari ini" : h.shiftLabel;
       btn.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${modeLabel}</h6><small>${prettyDateTime(h.ts)}</small></div><div class="mb-1">Tanggal: ${prettyTanggalLabel(h.tanggal)} • Personil: ${h.rows?.length||0}</div>`;
       btn.addEventListener("click", ()=>{
-        lastResults = (h.rows || []).map(r => ({ k: { nama: r.nama, shift: r.shift }, res: { avg: r.avg, count: r.count, lastTime: r.lastTime, slaCount: r.slaCount, durasiSLA: r.durasiSLA, inProgressCount: r.inProgressCount, relasiResolved: r.relasiResolved } }));
+        lastResults = (h.rows || []).map(r => ({ k: { nama: r.nama, shift: r.shift }, res: { avg: r.avg, count: r.count, lastTime: r.lastTime, slaCount: r.slaCount, durasiSLA: (r.durasiSLA !== undefined && r.durasiSLA !== null) ? r.durasiSLA : "-", inProgressCount: r.inProgressCount, relasiResolved: r.relasiResolved } }));
         renderTable(lastResults);
         const judul = document.getElementById("judulLaporan");
         judul.classList.add("is-history");
@@ -391,7 +391,8 @@ document.getElementById("ambilNamaBtn").addEventListener("click", async ()=>{
 /* ====== PERHITUNGAN ====== */
 function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik : 0; }
 
-/* rataRata_byName - DurasiSLA diambil dari right(8) umurRaw **hanya** untuk baris yang statusSLA mengandung "lewat" */
+/* rataRata_byName - DurasiSLA diambil dari right(8) umurRaw **hanya** untuk baris yang statusSLA mengandung "lewat".
+   Jika tidak ada nilai, durasiSLA akan menjadi "-" */
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
@@ -407,14 +408,14 @@ function rataRata_byName(nama,thr=0.85){
     }
     matches.push(r);
   }
-  if(!matches.length) return { avg:null, count:0, lastTime:"-", slaCount:0, durasiSLA:"", inProgressCount:0, relasiResolved:0 };
+  if(!matches.length) return { avg:null, count:0, lastTime:"-", slaCount:0, durasiSLA:"-", inProgressCount:0, relasiResolved:0 };
 
   const sum = matches.reduce((a,b)=>a+computeC(b),0);
   const latest = matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
 
   // Ambil hanya dari baris yang statusSLA mengandung "lewat"
   const lewatRows = matches.filter(r => (r.statusSLA||"").toString().toLowerCase().includes("lewat"));
-  let chosenDurasiSLA = "";
+  let chosenDurasiSLA = "-";
   if(lewatRows.length){
     // Pilih baris lewat yang paling baru (tanggalDiambil), jika ada
     lewatRows.sort((a,b)=>{
@@ -424,9 +425,10 @@ function rataRata_byName(nama,thr=0.85){
       if(ta < tb) return 1;
       return 0;
     });
-    // ambil right 8 chars dari umurRaw
+    // ambil right 8 chars dari umurRaw; jika kosong atau whitespace -> '-'
     const candidate = (lewatRows[0].umurRaw || "").toString();
-    chosenDurasiSLA = candidate.slice(-8).trim();
+    const extracted = candidate.slice(-8).trim();
+    chosenDurasiSLA = extracted ? extracted : "-";
   }
 
   return {
@@ -523,7 +525,7 @@ function renderTable(results){
       <td>${avg}</td>
       <td>${res.count || 0}</td>
       <td>${res.slaCount || 0}</td>
-      <td>${res.durasiSLA || ''}</td>
+      <td>${(res.durasiSLA !== undefined && res.durasiSLA !== null && res.durasiSLA !== "") ? res.durasiSLA : '-'}</td>
       <td>${res.inProgressCount || 0}</td>
       <td>${res.relasiResolved || 0}</td>
     `;
