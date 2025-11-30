@@ -250,9 +250,10 @@ async function loadHistory(){
   const url = `${HISTORY_GAS_URL}?action=getHistory`;
   const res = await fetch(url);
   const json = await res.json();
+  // fallback untuk beberapa nama properti yang mungkin dikirim dari GAS (rows, RowsJson, rowsJson)
   return (json.items||[]).map(h => ({
     ts: h.ts, mode: h.mode, shiftLabel: h.shiftLabel, tanggal: h.tanggal, toggleSiang14: h.toggleSiang14,
-    rows: h.rows || []
+    rows: h.rows || h.RowsJson || h.rowsJson || []
   }));
 }
 function showHistoryModal(){ renderHistoryList(); const modal = new bootstrap.Modal(document.getElementById("historyModal")); modal.show(); }
@@ -270,7 +271,21 @@ async function renderHistoryList(){
       const modeLabel = (h.mode==="IDX") ? "Index hari ini" : h.shiftLabel;
       btn.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${modeLabel}</h6><small>${prettyDateTime(h.ts)}</small></div><div class="mb-1">Tanggal: ${prettyTanggalLabel(h.tanggal)} • Personil: ${h.rows?.length||0}</div>`;
       btn.addEventListener("click", ()=>{
-        lastResults = (h.rows || []).map(r => ({ k: { nama: r.nama, shift: r.shift }, res: { avg: r.avg, count: r.count, lastTime: r.lastTime, slaCount: r.slaCount, durasiSLA: (r.durasiSLA !== undefined && r.durasiSLA !== null) ? r.durasiSLA : "-", inProgressCount: r.inProgressCount, relasiResolved: r.relasiResolved } }));
+        // gunakan fallback rows / RowsJson / rowsJson
+        const rawRows = h.rows || h.RowsJson || h.rowsJson || [];
+        lastResults = rawRows.map(r => ({
+          k: { nama: r.nama, shift: r.shift },
+          res: {
+            avg: r.avg,
+            count: r.count,
+            lastTime: r.lastTime,
+            slaCount: r.slaCount,
+            // pastikan durasiSLA tampil '-' bila kosong/null
+            durasiSLA: (r.durasiSLA !== undefined && r.durasiSLA !== null && r.durasiSLA !== "") ? r.durasiSLA : "-",
+            inProgressCount: r.inProgressCount,
+            relasiResolved: r.relasiResolved
+          }
+        }));
         renderTable(lastResults);
         const judul = document.getElementById("judulLaporan");
         judul.classList.add("is-history");
