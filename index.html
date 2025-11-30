@@ -270,7 +270,6 @@ async function renderHistoryList(){
       const modeLabel = (h.mode==="IDX") ? "Index hari ini" : h.shiftLabel;
       btn.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${modeLabel}</h6><small>${prettyDateTime(h.ts)}</small></div><div class="mb-1">Tanggal: ${prettyTanggalLabel(h.tanggal)} • Personil: ${h.rows?.length||0}</div>`;
       btn.addEventListener("click", ()=>{
-        // if history rows are stored differently, adapt this; here we expect compactResults shape
         lastResults = (h.rows || []).map(r => ({ k: { nama: r.nama, shift: r.shift }, res: { avg: r.avg, count: r.count, lastTime: r.lastTime, slaCount: r.slaCount, durasiSLA: r.durasiSLA, inProgressCount: r.inProgressCount, relasiResolved: r.relasiResolved } }));
         renderTable(lastResults);
         const judul = document.getElementById("judulLaporan");
@@ -390,22 +389,9 @@ document.getElementById("ambilNamaBtn").addEventListener("click", async ()=>{
 });
 
 /* ====== PERHITUNGAN ====== */
-/* computeC stays same */
 function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik : 0; }
 
-/* helper: cari durasi negatif terakhir di string (mis. "-00:05:23" atau "-05:23") */
-function extractNegativeDurasiFromString(s){
-  if(!s) return "";
-  const str = String(s).trim();
-  // cari semua segmen seperti -HH:MM:SS atau -H:MM:SS atau -MM:SS
-  const regex = /-\d{1,2}:\d{2}(?::\d{2})?/g;
-  const matches = Array.from(str.matchAll(regex)).map(m=>m[0]);
-  if(!matches.length) return "";
-  // ambil yang paling kanan (terakhir)
-  return matches[matches.length - 1];
-}
-
-/* rataRata_byName now also computes durasiSLA (latest negative umurRaw using regex) */
+/* rataRata_byName - DurasiSLA diambil dari right(8) umurRaw **hanya** untuk baris yang statusSLA mengandung "lewat" */
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
@@ -426,18 +412,21 @@ function rataRata_byName(nama,thr=0.85){
   const sum = matches.reduce((a,b)=>a+computeC(b),0);
   const latest = matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
 
-  // gunakan helper untuk ambil durasi negatif dari umurRaw; pilih kandidat yang paling baru
-  const negCandidates = matches.map(m => ({ row: m, durasiNeg: extractNegativeDurasiFromString(m.umurRaw || "") })).filter(x => x.durasiNeg);
+  // Ambil hanya dari baris yang statusSLA mengandung "lewat"
+  const lewatRows = matches.filter(r => (r.statusSLA||"").toString().toLowerCase().includes("lewat"));
   let chosenDurasiSLA = "";
-  if(negCandidates.length){
-    negCandidates.sort((a,b)=>{
-      const ta = a.row.tanggalDiambil || "";
-      const tb = b.row.tanggalDiambil || "";
+  if(lewatRows.length){
+    // Pilih baris lewat yang paling baru (tanggalDiambil), jika ada
+    lewatRows.sort((a,b)=>{
+      const ta = a.tanggalDiambil || "";
+      const tb = b.tanggalDiambil || "";
       if(ta > tb) return -1;
       if(ta < tb) return 1;
       return 0;
     });
-    chosenDurasiSLA = negCandidates[0].durasiNeg;
+    // ambil right 8 chars dari umurRaw
+    const candidate = (lewatRows[0].umurRaw || "").toString();
+    chosenDurasiSLA = candidate.slice(-8).trim();
   }
 
   return {
