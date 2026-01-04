@@ -179,7 +179,9 @@
 </div>
        <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
-      <button id="downloadBtn" class="btn btn-outline-primary">Download JPG</button>
+      <button id="shareBtn" class="btn btn-success">
+  📤 Share ke WhatsApp
+</button>
     </div>
   </div>
 
@@ -813,15 +815,51 @@ function sortColumn(key){
 }
 
 /* ====== DOWNLOAD JPG ====== */
-document.getElementById("downloadBtn").addEventListener("click", async () => {
+<script>
+document.getElementById("shareBtn").addEventListener("click", async () => {
   const area = document.querySelector("#resultArea");
-  const canvas = await html2canvas(area, { scale: 2 });
-  const link = document.createElement("a");
-  link.download = "Laporan_Index_Shift.jpg";
-  link.href = canvas.toDataURL("image/jpeg");
-  link.click();
-});
 
+  const canvas = await html2canvas(area, { scale: 2 });
+  const blob = await new Promise(resolve =>
+    canvas.toBlob(resolve, "image/jpeg", 0.95)
+  );
+
+  const file = new File(
+    [blob],
+    "Laporan_Index_Shift.jpg",
+    { type: "image/jpeg" }
+  );
+
+  // ✅ Jika browser mendukung Web Share API (Android / iOS)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        title: "Laporan Index CO",
+        text: "Berikut laporan index CO hari ini.",
+        files: [file]
+      });
+    } catch (err) {
+      console.warn("Share dibatalkan", err);
+    }
+  } 
+  // 🔁 Fallback (Desktop)
+  else {
+    const url = URL.createObjectURL(blob);
+
+    // download otomatis
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Laporan_Index_Shift.jpg";
+    a.click();
+
+    // buka WhatsApp Web dengan pesan
+    const text = encodeURIComponent(
+      "Laporan Index CO terlampir (sudah terdownload)."
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  }
+});
+</script>
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -886,6 +924,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
