@@ -819,63 +819,61 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   const resultArea = document.getElementById("resultArea");
   const statusText = document.getElementById("statusText");
 
-  // Memberi info bahwa proses sedang berjalan
-  statusText.textContent = "Sedang menyiapkan gambar...";
+  statusText.textContent = "Menyiapkan laporan...";
 
   try {
-    // 1. Konversi elemen HTML (Tabel) menjadi Canvas
     const canvas = await html2canvas(resultArea, {
       backgroundColor: "#ffffff",
-      scale: 2, // Meningkatkan resolusi gambar
-      logging: false
+      scale: 2
     });
 
-    // 2. Konversi Canvas menjadi Blob (Binary Large Object)
+    // 1. Ambil Blob dari canvas
     canvas.toBlob(async (blob) => {
-      if (!blob) {
-        alert("Gagal membuat gambar.");
-        return;
-      }
+      if (!blob) return;
 
-      // 3. Membuat file dari Blob agar bisa di-share
-      const file = new File([blob], "Laporan_Index_Shift.jpg", { type: "image/jpeg" });
+      // CEK APAKAH INI MOBILE ATAU PC
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // 4. Cek apakah browser mendukung fitur Share File
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Laporan Index Shift',
-            text: 'Berikut adalah laporan Index CO terbaru.'
-          });
-          statusText.textContent = "✅ Berhasil dibagikan!";
-        } catch (err) {
-          if (err.name !== "AbortError") {
-            console.error("Gagal share:", err);
-            statusText.textContent = "❌ Gagal memicu menu share.";
-          } else {
-            statusText.textContent = "Canceled.";
-          }
-        }
+      if (isMobile && navigator.share) {
+        // --- MODE HP: Share Langsung ---
+        const file = new File([blob], "Laporan.jpg", { type: "image/jpeg" });
+        await navigator.share({
+          files: [file],
+          title: 'Laporan Index Shift'
+        });
+        statusText.textContent = "✅ Berhasil!";
       } else {
-        // Fallback jika browser PC atau browser lama yang tidak dukung Web Share API
-        statusText.textContent = "Browser tidak mendukung share langsung.";
-        alert("Browser Anda tidak mendukung share langsung. Gambar akan diunduh sebagai gantinya.");
-        
-        // Opsional: Otomatis download sebagai cadangan
-        const link = document.createElement('a');
-        link.download = 'Laporan_Index_Shift.jpg';
-        link.href = canvas.toDataURL("image/jpeg");
-        link.click();
+        // --- MODE PC: Copy ke Clipboard + Buka WA ---
+        try {
+          // Salin ke Clipboard (Hanya dukung PNG untuk clipboard)
+          const item = new ClipboardItem({ "image/png": blob });
+          await navigator.clipboard.write([item]);
+          
+          statusText.textContent = "✅ Gambar disalin! Tempel (Ctrl+V) di WA.";
+          
+          // Beri jeda sebentar lalu buka WhatsApp Web
+          setTimeout(() => {
+            window.open('https://web.whatsapp.com/', '_blank');
+          }, 1500);
+          
+          alert("Gambar laporan sudah OTOMATIS DI-COPY.\n\nSekarang WhatsApp akan terbuka, Anda cukup klik grup/chat lalu tekan Ctrl + V (Paste).");
+        } catch (err) {
+          console.error(err);
+          // Jika gagal copy (browser tidak support), download saja
+          const link = document.createElement('a');
+          link.download = 'Laporan.jpg';
+          link.href = canvas.toDataURL("image/jpeg");
+          link.click();
+          statusText.textContent = "Gagal copy, file terdownload.";
+        }
       }
-    }, "image/jpeg", 0.9);
+    }, "image/png"); // Gunakan PNG agar bisa masuk Clipboard
 
   } catch (error) {
-    console.error("Error:", error);
-    statusText.textContent = "❌ Terjadi kesalahan teknis.";
+    console.error(error);
+    statusText.textContent = "❌ Terjadi kesalahan.";
   }
 });
-
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -940,6 +938,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
