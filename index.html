@@ -814,13 +814,13 @@ function sortColumn(key){
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
 }
 
-/* ====== SHARE KE WHATSAPP (JPG) ====== */
+/* ====== SHARE VIA WHATSAPP WEB ====== */
 document.getElementById("shareBtn")?.addEventListener("click", async () => {
   const area = document.querySelector("#resultArea");
   if (!area) return alert("Area laporan tidak ditemukan.");
 
+  // generate gambar
   const canvas = await html2canvas(area, { scale: 2 });
-
   const blob = await new Promise(resolve =>
     canvas.toBlob(resolve, "image/jpeg", 0.95)
   );
@@ -830,39 +830,24 @@ document.getElementById("shareBtn")?.addEventListener("click", async () => {
     return;
   }
 
-  const file = new File(
-    [blob],
-    "Laporan_Index_Shift.jpg",
-    { type: "image/jpeg" }
+  // download otomatis
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Laporan_Index_Shift.jpg";
+  a.click();
+
+  // buka WhatsApp Web (TEKS SAJA)
+  const text = encodeURIComponent(
+    "Laporan Index CO sudah saya siapkan.\nSilakan attach file JPG yang baru terdownload."
   );
 
-  // 📱 Mobile (Android / iOS)
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        title: "Laporan Index CO",
-        text: "Berikut laporan index CO.",
-        files: [file]
-      });
-    } catch (err) {
-      console.warn("Share dibatalkan:", err);
-    }
-  } 
-  // 🖥️ Desktop fallback
-  else {
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Laporan_Index_Shift.jpg";
-    a.click();
-
-    const text = encodeURIComponent(
-      "Laporan Index CO sudah terdownload."
-    );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-  }
+  window.open(
+    `https://web.whatsapp.com/send?text=${text}`,
+    "_blank"
+  );
 });
+
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -927,6 +912,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
