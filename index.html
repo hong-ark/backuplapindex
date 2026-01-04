@@ -551,44 +551,38 @@ document.getElementById("ambilNamaBtn").addEventListener("click", async ()=>{
 });
 
 /* ====== PERHITUNGAN ====== */
-function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik : 0; }
+function computeC(r){return r.waktuSlaDetik>0?r.durasiDetik/r.waktuSlaDetik:0;}
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
-  const keyNama = normalizeName(nama);
+  const keyNama=normalizeName(nama);
+
   for(const r of csvData){
-    if(!isAcceptedStatus(r.statusNorm)) continue;
-    if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
+    if(!isAcceptedStatus(r.statusNorm))continue;
+    if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch")continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
-    const currentShift = document.getElementById("shiftInput").value.trim().toUpperCase();
+
+    const currentShift=document.getElementById("shiftInput").value.trim().toUpperCase();
     if(currentShift==="IDX"){
-      if(normalizeName(r.diambilOleh) !== keyNama) continue;
+      if(normalizeName(r.diambilOleh)!==keyNama) continue; // exact match pada IDX
     }else{
-      // fuzzy match
-      if(similarity(nama, r.diambilOleh) < thr) continue;
+      if(similarity(nama,r.diambilOleh)<thr) continue;     // toleran typo pada shift
     }
     matches.push(r);
   }
-  if(!matches.length) return { avg:null, count:0, lastTime:"-", slaCount:0, inProgressCount:0, relasiResolved:0 };
-  const sum = matches.reduce((a,b)=>a+computeC(b),0);
-  const latest = matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
-  return {
-    avg: sum / matches.length,
-    count: matches.length,
-    lastTime: ambilJamDariTanggal(latest),
-    slaCount: matches.filter(r=>r.statusSLA && r.statusSLA.toLowerCase().includes("lewat")).length,
-    inProgressCount: matches.filter(r=>r.statusNorm.includes("inprogress")||r.statusNorm.includes("in progress")).length,
-    relasiResolved: matches.filter(r=>r.statusNorm.includes("pending")).length
+
+  if(!matches.length)return{avg:null,count:0,lastTime:"-",slaCount:0,inProgressCount:0,relasiResolved:0};
+
+  const sum=matches.reduce((a,b)=>a+computeC(b),0);
+  const latest=matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
+  return{
+    avg:sum/matches.length,
+    count:matches.length,
+    lastTime:ambilJamDariTanggal(latest),
+    slaCount:matches.filter(r=>r.statusSLA&&r.statusSLA.toLowerCase().includes("lewat")).length,
+    inProgressCount:matches.filter(r=>r.statusNorm.includes("inprogress")||r.statusNorm.includes("in progress")).length,
+    relasiResolved:matches.filter(r=>r.statusNorm.includes("pending")).length
   };
 }
-
-/* simple levenshtein/similarity used above */
-function levenshtein(a,b){ a=a||""; b=b||""; const al=a.length, bl=b.length; if(!al) return bl; if(!bl) return al;
-  const dp=Array.from({length:al+1},()=>Array(bl+1).fill(0));
-  for(let i=0;i<=al;i++) dp[i][0]=i; for(let j=0;j<=bl;j++) dp[0][j]=j;
-  for(let i=1;i<=al;i++) for(let j=1;j<=bl;j++) dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
-  return dp[al][bl];
-}
-function similarity(a,b){ a=normalizeName(a); b=normalizeName(b); if(!a||!b) return 0; const d=levenshtein(a,b); return 1 - d / Math.max(a.length,b.length); }
 
 /* ====== HITUNG & RENDER TABEL (Generate Button) ====== */
 document.getElementById("generateBtn").addEventListener("click", async ()=>{
@@ -898,6 +892,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
