@@ -97,15 +97,6 @@
 
   <div class="content-area">
     <p style="margin:0 0 12px 0;color:#333">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
-<div id="progressContainer" class="mt-3 d-none">
-  <div class="d-flex justify-content-between mb-1">
-    <span id="progressLabel" class="small fw-bold">Mengirim data ke Cloud...</span>
-    <span id="progressPercent" class="small">0%</span>
-  </div>
-  <div class="progress" style="height: 10px;">
-    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-         role="progressbar" style="width: 0%"></div>
-  </div>
 </div>
     <div class="mb-3 row align-items-end">
       <div class="col-auto">
@@ -138,7 +129,15 @@
       <label class="form-label">Upload CSV</label>
       <input type="file" id="csvFile" class="form-control" accept=".csv" />
     </div>
-
+<div id="progressContainer" class="mt-3 d-none">
+  <div class="d-flex justify-content-between mb-1">
+    <span id="progressLabel" class="small fw-bold">Mengirim data ke Cloud...</span>
+    <span id="progressPercent" class="small">0%</span>
+  </div>
+  <div class="progress" style="height: 10px;">
+    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+         role="progressbar" style="width: 0%"></div>
+  </div>
     <div class="d-flex justify-content-between align-items-center mb-1">
   <!-- KIRI -->
   <div class="d-flex align-items-center gap-2">
@@ -978,6 +977,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
