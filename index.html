@@ -68,7 +68,7 @@
 
     @media (max-width: 600px){
       .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
-      .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
+      .marquee { font-size:13px; --marquee-duration: 12s; } #resultTable td { font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -83,21 +83,19 @@
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT KUNING UNTUK INDEX DIATAS 0.35 &nbsp; • &nbsp;</span>
         <span class="item">CHECKLIST HITUNG SLA MULAI ≥ 13:00 HANYA UNTUK MENAMPILKAN PENGHITUNGAN PASCA SHIFT MALAM MASUK SIANG, HILANGKAN CHECKLIST UNTUK MENGHITUNG INDEX TOTALNYA &nbsp; • &nbsp;</span>
-        <span class="item">MENU CARI KOMPLAIN UNTUK TRACKING CO DARI REKAPAN FILE YANG SUDAH DIUPLOAD &nbsp; • &nbsp;</span>
-        
+
         <!-- duplikat untuk loop seamless -->
         <span class="item">JANGAN LUPA SELALU CEK INDEX HARI INI &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT KUNING UNTUK INDEX DIATAS 0.35 &nbsp; • &nbsp;</span>
         <span class="item">CHECKLIST HITUNG SLA MULAI ≥ 13:00 HANYA UNTUK MENAMPILKAN PENGHITUNGAN PASCA SHIFT MALAM MASUK SIANG, HILANGKAN CHECKLIST UNTUK MENGHITUNG INDEX TOTALNYA &nbsp; • &nbsp;</span>
-        <span class="item">MENU CARI KOMPLAIN UNTUK TRACKING CO DARI REKAPAN FILE YANG SUDAH DIUPLOAD &nbsp; • &nbsp;</span>
       </div>
     </div>
   </div>
 
   <div class="content-area">
     <p style="margin:0 0 12px 0;color:#333">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
-</div>
+
     <div class="mb-3 row align-items-end">
       <div class="col-auto">
         <label class="form-label">Mode</label><br />
@@ -126,30 +124,12 @@
     <hr>
 
     <div class="mb-3">
-    <label class="form-label">Upload CSV</label>
-    <input type="file" id="csvFile" class="form-control" accept=".csv" />
-    
-    <div id="progressContainer" class="mt-2 d-none">
-        <div class="d-flex justify-content-between mb-1">
-            <span id="progressLabel" class="small fw-bold" style="font-size: 11px;">Mengirim data ke Cloud...</span>
-            <span id="progressPercent" class="small" style="font-size: 11px;">0%</span>
-        </div>
-        <div class="progress" style="height: 8px;">
-            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                 role="progressbar" style="width: 0%"></div>
-        </div>
+      <label class="form-label">Upload CSV</label>
+      <input type="file" id="csvFile" class="form-control" accept=".csv" />
     </div>
-</div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="d-flex align-items-center gap-2">
-        <button id="generateBtn" class="btn btn-success" disabled>Hitung Index</button>
-        <span id="statusText" class="text-muted small"></span>
-    </div>
-    <a href="https://hong-ark.github.io/laporanindex/search.html" target="_blank" class="btn btn-outline-success">
-        🔍 Cari Komplain
-    </a>
-</div>
+    <button id="generateBtn" class="btn btn-success mb-1" disabled>Hitung Index</button>
+    <span id="statusText" class="ms-2 text-muted"></span>
 
     <div class="form-check mt-2">
       <input class="form-check-input" type="checkbox" id="toggleSiang14" disabled>
@@ -159,7 +139,7 @@
     <div id="judulLaporan" class="mt-2"></div>
 
     <div id="resultArea" class="mt-2">
-  <table id="resultTable" class="table table-bordered table-striped">
+      <table id="resultTable" class="table table-bordered table-striped">
         <thead>
           <tr>
             <th>No</th>
@@ -176,16 +156,11 @@
         </thead>
         <tbody></tbody>
       </table>
+    </div>
 
-  <div id="lastUpdate" class="last-update-text">
-    Last update data: -
-  </div>
-</div>
-       <div class="d-flex justify-content-end gap-2 mt-3">
+    <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
-      <button id="shareBtn" class="btn btn-success">
-  📤 Share ke WhatsApp
-</button>
+      <button id="downloadBtn" class="btn btn-outline-primary">Download JPG</button>
     </div>
   </div>
 
@@ -212,8 +187,6 @@
 /* ====== KONFIG / STATE ====== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx4dWdi4tSGqHN3WQ89Za1wyklGj1eLfcNPwqBeLa15aLUKrzjncKvySo07-9GuqxPD0g/exec";
 const HISTORY_GAS_URL = "https://script.google.com/macros/s/AKfycbwrXZlIB4nyiQtb-MM79c8rm1rDuoVyEZRxdk4-yTHaM_teOWR-XxC_BK50RsVlmo-P/exec";
-const DATA_GAS_URL = "https://script.google.com/macros/s/AKfycbxjKAOxUdGMPqnt741N_geiDVBEsYBiVUdhIHWqb60ktCnZn6bTevlcCEYcON4OWWAlXg/exec"; // SHEET = DATA
-
 
 let sheetData = [], csvData = [], lastResults = [];
 let shiftLabel = "";
@@ -224,22 +197,7 @@ let sortAscNama=true, sortAscLastCO=false, sortAscIndexCO=false, sortAscTotalCO=
 const originalHeaderText = {};
 
 /* ====== INIT ====== */
-document.addEventListener("DOMContentLoaded", ()=> {
-  document.getElementById("tanggalCek").textContent =
-    new Date().toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
-
-  document.querySelectorAll('#resultTable thead th[id]').forEach(th=>{
-    originalHeaderText[th.id] = th.innerHTML;
-  });
-
-  updateToggleSiangAvailability();
-  loadLastUpdate();
-  setInterval(loadLastUpdate, 600000);
-});
+document.getElementById("tanggalCek").textContent = new Date().toLocaleDateString("id-ID", {day:"numeric",month:"long",year:"numeric"});
 
 /* ====== UTIL ====== */
 function normKey(s){ return (s||"").toString().toLowerCase().replace(/[^a-z0-9]/g,''); }
@@ -389,107 +347,6 @@ async function renderHistoryList(){
 }
 
 /* ====== CSV LOAD ====== */
- async function kirimCsvKeGoogleSheetDATA(csvRows) {
-  if (!csvRows || !csvRows.length) return;
-
-  const progContainer = document.getElementById("progressContainer");
-  const progBar = document.getElementById("progressBar");
-  const progPercent = document.getElementById("progressPercent");
-  const progLabel = document.getElementById("progressLabel");
-  const statusText = document.getElementById("statusText");
-
-  // Munculkan Progress Bar
-  progContainer.classList.remove("d-none");
-  progBar.style.width = "0%";
-  progPercent.textContent = "0%";
-  progLabel.textContent = "Menyiapkan data...";
-
-  // Simulasi progress awal (saat memproses array)
-  let progress = 0;
-  const interval = setInterval(() => {
-    if (progress < 85) { // Berhenti di 85% sampai fetch selesai
-      progress += Math.random() * 15;
-      if (progress > 85) progress = 85;
-      progBar.style.width = progress + "%";
-      progPercent.textContent = Math.round(progress) + "%";
-    }
-  }, 300);
-
-  const sheetRows = csvRows.map(r => [
-    "", // No (biarkan kosong jika ada auto-number di Apps Script)
-    r["No Komplain"] || "",
-    r["Jenis Komplain"] || "",
-    r["Kategori Masalah"] || "",
-    r["Masalah"] || "",
-    r["Sub Masalah"] || "",
-    r["Umur Komplain"] || "",
-    r["Durasi Komplain"] || "",
-    r["Waktu SLA"] || "",
-    r["Bisnis Unit Asal"] || "",
-    r["Tipe Lokasi Asal"] || "",
-    r["Kode Lokasi Asal"] || "",
-    r["Nama Lokasi Asal"] || "",
-    r["Cabang Lokasi Asal"] || "",
-    r["Nama Area Supervisor"] || "",
-    r["Nama Area Manager"] || "",
-    r["Bagian Asal"] || "",
-    r["Tanggal Buat"] || "",
-    r["Dibuat Oleh"] || "",
-    r["Tanggal Diambil"] || "",
-    r["Diambil Oleh"] || "",
-    r["NIK Pengambil"] || "",
-    r["Tanggal Selesai"] || "",
-    r["Diselesaikan Oleh"] || "",
-    r["Tanggal Tutup"] || "",
-    r["Ditutup Oleh"] || "",
-    r["Ditutup Melalui"] || "",
-    r["Bisnis Unit Tujuan"] || "",
-    r["Tipe Lokasi Tujuan"] || "",
-    r["Kode Lokasi Tujuan"] || "",
-    r["Nama Lokasi Tujuan"] || "",
-    r["Bagian Tujuan"] || "",
-    r["Tujuan Relasi Komplain"] || "",
-    r["Status Komplain"] || "",
-    r["Status SLA"] || "",
-    r["No. Aktiva"] || "",
-    r["Nama Aktiva"] || "",
-    r["Status Perbaikan AT"] || "",
-    r["Deskripsi"] || "",
-    r["Solusi"] || "",
-    r["Asal Relasi - Lokasi"] || ""
-  ]);
-
-  try {
-    progLabel.textContent = "Mengunggah ke Google Sheets...";
-    
-    await fetch(DATA_GAS_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ rows: sheetRows })
-    });
-
-    // Fetch selesai, set ke 100%
-    clearInterval(interval);
-    progBar.style.width = "100%";
-    progPercent.textContent = "100%";
-    progLabel.textContent = "Selesai!";
-    statusText.textContent = "✅ DATA berhasil dikirim ke Google Sheet DATA";
-
-    // Sembunyikan progress bar setelah 3 detik
-    setTimeout(() => {
-      progContainer.classList.add("d-none");
-    }, 3000);
-
-  } catch (err) {
-    clearInterval(interval);
-    alert("❌ Error kirim DATA: " + err.message);
-    progLabel.textContent = "Gagal mengirim data.";
-    progBar.classList.replace("bg-success", "bg-danger");
-  }
-}
-
-
 document.getElementById("csvFile").addEventListener("change",(e)=>{
   const file = e.target.files[0]; if(!file) return;
   Papa.parse(file,{header:true,delimiter:";",skipEmptyLines:true,
@@ -537,7 +394,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         document.getElementById("modeNote").textContent = sheetData.length ? " " : "(Mode Index) Tidak ada nama pada kolom 'Diambil oleh'.";
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
-      kirimCsvKeGoogleSheetDATA(res.data);
     }});
 });
 
@@ -802,20 +658,7 @@ function escapeHtml(s){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
-/* ===== LOAD LAST UPDATE DATA ===== */
-async function loadLastUpdate() {
-  try {
-    const res = await fetch(`${DATA_GAS_URL}?mode=lastUpdate`);
-    const json = await res.json();
 
-    if (json.ok && json.lastUpdate) {
-      document.getElementById("lastUpdate").textContent =
-        `Last update data: ${json.lastUpdate}`;
-    }
-  } catch (err) {
-    console.warn("Gagal load last update");
-  }
-}
 /* ====== SORTING helpers ====== */
 function resetAllHeaderArrows(){
   Object.keys(originalHeaderText).forEach(id=>{
@@ -853,62 +696,16 @@ function sortColumn(key){
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
 }
 
-/* ====== SHARE VIA WHATSAPP WEB ====== */
-document.getElementById("shareBtn").addEventListener("click", async () => {
-  const resultArea = document.getElementById("resultArea");
-  const statusText = document.getElementById("statusText");
-
-  statusText.textContent = "Sedang memproses gambar...";
-
-  try {
-    const canvas = await html2canvas(resultArea, {
-      backgroundColor: "#ffffff",
-      scale: 2
-    });
-
-    // Cek perangkat (Mobile vs PC)
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile && navigator.share) {
-      // --- MODE MOBILE: Share File ---
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], "Laporan_Index.jpg", { type: "image/jpeg" });
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Laporan Index Shift'
-          });
-          statusText.textContent = "✅ Berhasil dishare.";
-        } catch (err) {
-          statusText.textContent = "Batal share.";
-        }
-      }, "image/jpeg", 0.9);
-
-    } else {
-      // --- MODE PC: Copy ke Clipboard ---
-      canvas.toBlob(async (blob) => {
-        try {
-          const item = new ClipboardItem({ "image/png": blob });
-          await navigator.clipboard.write([item]);
-          
-          statusText.textContent = "✅ Gambar disalin ke Clipboard!";
-          
-          // Notifikasi pop-up yang jelas untuk user PC
-          alert("GAMBAR BERHASIL DISALIN!\n\nSilakan buka WhatsApp (Web atau Desktop),\npilih chat, lalu tekan CTRL + V untuk menempel gambar.");
-        } catch (err) {
-          console.error(err);
-          // Fallback jika browser PC memblokir akses clipboard
-          statusText.textContent = "Gagal menyalin otomatis.";
-          alert("Gagal menyalin gambar secara otomatis. Gunakan Klik Kanan > Save Image as sebagai alternatif.");
-        }
-      }, "image/png"); // PNG lebih stabil untuk clipboard PC
-    }
-
-  } catch (error) {
-    console.error("Error:", error);
-    statusText.textContent = "❌ Terjadi kesalahan.";
-  }
+/* ====== DOWNLOAD JPG ====== */
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const area = document.querySelector("#resultArea");
+  const canvas = await html2canvas(area, { scale: 2 });
+  const link = document.createElement("a");
+  link.download = "Laporan_Index_Shift.jpg";
+  link.href = canvas.toDataURL("image/jpeg");
+  link.click();
 });
+
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -964,56 +761,8 @@ document.addEventListener("DOMContentLoaded", ()=> {
   document.querySelectorAll('#resultTable thead th[id]').forEach(th=>{
     originalHeaderText[th.id] = th.innerHTML;
   });
-
   updateToggleSiangAvailability();
-
-  loadLastUpdate();
-  setInterval(loadLastUpdate, 600000); // refresh tiap 10 menit
 });
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
