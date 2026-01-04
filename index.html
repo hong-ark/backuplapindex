@@ -815,37 +815,65 @@ function sortColumn(key){
 }
 
 /* ====== SHARE VIA WHATSAPP WEB ====== */
-document.getElementById("shareBtn")?.addEventListener("click", async () => {
-  const area = document.querySelector("#resultArea");
-  if (!area) return alert("Area laporan tidak ditemukan.");
+document.getElementById("shareBtn").addEventListener("click", async () => {
+  const resultArea = document.getElementById("resultArea");
+  const statusText = document.getElementById("statusText");
 
-  // generate gambar
-  const canvas = await html2canvas(area, { scale: 2 });
-  const blob = await new Promise(resolve =>
-    canvas.toBlob(resolve, "image/jpeg", 0.95)
-  );
+  // Memberi info bahwa proses sedang berjalan
+  statusText.textContent = "Sedang menyiapkan gambar...";
 
-  if (!blob) {
-    alert("Gagal membuat gambar.");
-    return;
+  try {
+    // 1. Konversi elemen HTML (Tabel) menjadi Canvas
+    const canvas = await html2canvas(resultArea, {
+      backgroundColor: "#ffffff",
+      scale: 2, // Meningkatkan resolusi gambar
+      logging: false
+    });
+
+    // 2. Konversi Canvas menjadi Blob (Binary Large Object)
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        alert("Gagal membuat gambar.");
+        return;
+      }
+
+      // 3. Membuat file dari Blob agar bisa di-share
+      const file = new File([blob], "Laporan_Index_Shift.jpg", { type: "image/jpeg" });
+
+      // 4. Cek apakah browser mendukung fitur Share File
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Laporan Index Shift',
+            text: 'Berikut adalah laporan Index CO terbaru.'
+          });
+          statusText.textContent = "✅ Berhasil dibagikan!";
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            console.error("Gagal share:", err);
+            statusText.textContent = "❌ Gagal memicu menu share.";
+          } else {
+            statusText.textContent = "Canceled.";
+          }
+        }
+      } else {
+        // Fallback jika browser PC atau browser lama yang tidak dukung Web Share API
+        statusText.textContent = "Browser tidak mendukung share langsung.";
+        alert("Browser Anda tidak mendukung share langsung. Gambar akan diunduh sebagai gantinya.");
+        
+        // Opsional: Otomatis download sebagai cadangan
+        const link = document.createElement('a');
+        link.download = 'Laporan_Index_Shift.jpg';
+        link.href = canvas.toDataURL("image/jpeg");
+        link.click();
+      }
+    }, "image/jpeg", 0.9);
+
+  } catch (error) {
+    console.error("Error:", error);
+    statusText.textContent = "❌ Terjadi kesalahan teknis.";
   }
-
-  // download otomatis
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "Laporan_Index_Shift.jpg";
-  a.click();
-
-  // buka WhatsApp Web (TEKS SAJA)
-  const text = encodeURIComponent(
-    "Laporan Index CO sudah saya siapkan.\nSilakan attach file JPG yang baru terdownload."
-  );
-
-  window.open(
-    `https://web.whatsapp.com/send?text=${text}`,
-    "_blank"
-  );
 });
 
 /* ====== UI helper for toggle siang and button states ====== */
@@ -912,6 +940,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
