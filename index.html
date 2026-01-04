@@ -819,7 +819,7 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   const resultArea = document.getElementById("resultArea");
   const statusText = document.getElementById("statusText");
 
-  statusText.textContent = "Menyiapkan laporan...";
+  statusText.textContent = "Sedang memproses gambar...";
 
   try {
     const canvas = await html2canvas(resultArea, {
@@ -827,50 +827,46 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
       scale: 2
     });
 
-    // 1. Ambil Blob dari canvas
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
+    // Cek perangkat (Mobile vs PC)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // CEK APAKAH INI MOBILE ATAU PC
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (isMobile && navigator.share) {
-        // --- MODE HP: Share Langsung ---
-        const file = new File([blob], "Laporan.jpg", { type: "image/jpeg" });
-        await navigator.share({
-          files: [file],
-          title: 'Laporan Index Shift'
-        });
-        statusText.textContent = "✅ Berhasil!";
-      } else {
-        // --- MODE PC: Copy ke Clipboard + Buka WA ---
+    if (isMobile && navigator.share) {
+      // --- MODE MOBILE: Share File ---
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], "Laporan_Index.jpg", { type: "image/jpeg" });
         try {
-          // Salin ke Clipboard (Hanya dukung PNG untuk clipboard)
+          await navigator.share({
+            files: [file],
+            title: 'Laporan Index Shift'
+          });
+          statusText.textContent = "✅ Berhasil dishare.";
+        } catch (err) {
+          statusText.textContent = "Batal share.";
+        }
+      }, "image/jpeg", 0.9);
+
+    } else {
+      // --- MODE PC: Copy ke Clipboard ---
+      canvas.toBlob(async (blob) => {
+        try {
           const item = new ClipboardItem({ "image/png": blob });
           await navigator.clipboard.write([item]);
           
-          statusText.textContent = "✅ Gambar disalin! Tempel (Ctrl+V) di WA.";
+          statusText.textContent = "✅ Gambar disalin ke Clipboard!";
           
-          // Beri jeda sebentar lalu buka WhatsApp Web
-          setTimeout(() => {
-            window.open('https://web.whatsapp.com/', '_blank');
-          }, 1500);
-          
-          alert("Gambar laporan sudah OTOMATIS DI-COPY.\n\nSekarang WhatsApp akan terbuka, Anda cukup klik grup/chat lalu tekan Ctrl + V (Paste).");
+          // Notifikasi pop-up yang jelas untuk user PC
+          alert("GAMBAR BERHASIL DISALIN!\n\nSilakan buka WhatsApp (Web atau Desktop),\npilih chat, lalu tekan CTRL + V untuk menempel gambar.");
         } catch (err) {
           console.error(err);
-          // Jika gagal copy (browser tidak support), download saja
-          const link = document.createElement('a');
-          link.download = 'Laporan.jpg';
-          link.href = canvas.toDataURL("image/jpeg");
-          link.click();
-          statusText.textContent = "Gagal copy, file terdownload.";
+          // Fallback jika browser PC memblokir akses clipboard
+          statusText.textContent = "Gagal menyalin otomatis.";
+          alert("Gagal menyalin gambar secara otomatis. Gunakan Klik Kanan > Save Image as sebagai alternatif.");
         }
-      }
-    }, "image/png"); // Gunakan PNG agar bisa masuk Clipboard
+      }, "image/png"); // PNG lebih stabil untuk clipboard PC
+    }
 
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error);
     statusText.textContent = "❌ Terjadi kesalahan.";
   }
 });
@@ -938,6 +934,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
