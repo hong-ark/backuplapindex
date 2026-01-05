@@ -179,7 +179,9 @@
 </div>
        <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
-      <button id="shareBtn" class="btn btn-success">Share ke WhatsApp</button>
+      <button id="shareBtn" class="btn btn-success">
+  📤 Share ke WhatsApp
+</button>
     </div>
   </div>
 
@@ -551,38 +553,96 @@ document.getElementById("ambilNamaBtn").addEventListener("click", async ()=>{
 });
 
 /* ====== PERHITUNGAN ====== */
-function computeC(r){return r.waktuSlaDetik>0?r.durasiDetik/r.waktuSlaDetik:0;}
+function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik : 0; }
+
+/* rataRata_byName - DurasiSLA diambil dari right(8) umurRaw **hanya** untuk baris yang statusSLA mengandung "lewat".
+   Jika tidak ada nilai, durasiSLA akan menjadi "0"
+   Perubahan: earlyMorning deteksi dilakukan DENGAN MEMINDAI csvData (tidak bergantung pada filter siang),
+   sehingga bold tetap aktif meskipun toggle Siang >=13:00 dicentang.
+*/
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
-  const keyNama=normalizeName(nama);
-
+  const keyNama = normalizeName(nama);
   for(const r of csvData){
-    if(!isAcceptedStatus(r.statusNorm))continue;
-    if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch")continue;
+    if(!isAcceptedStatus(r.statusNorm)) continue;
+    if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
-
-    const currentShift=document.getElementById("shiftInput").value.trim().toUpperCase();
+    const currentShift = document.getElementById("shiftInput").value.trim().toUpperCase();
     if(currentShift==="IDX"){
-      if(normalizeName(r.diambilOleh)!==keyNama) continue; // exact match pada IDX
+      if(normalizeName(r.diambilOleh) !== keyNama) continue;
     }else{
-      if(similarity(nama,r.diambilOleh)<thr) continue;     // toleran typo pada shift
+      if(similarity(nama, r.diambilOleh) < thr) continue;
     }
     matches.push(r);
   }
+  if(!matches.length) return { avg:null, count:0, lastTime:"-", slaCount:0, durasiSLA:"0", inProgressCount:0, relasiResolved:0, earlyMorning:false };
 
-  if(!matches.length)return{avg:null,count:0,lastTime:"-",slaCount:0,inProgressCount:0,relasiResolved:0};
+  const sum = matches.reduce((a,b)=>a+computeC(b),0);
+  const latest = matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
 
-  const sum=matches.reduce((a,b)=>a+computeC(b),0);
-  const latest=matches.map(r=>r.tanggalDiambil).filter(Boolean).sort().pop();
-  return{
-    avg:sum/matches.length,
-    count:matches.length,
-    lastTime:ambilJamDariTanggal(latest),
-    slaCount:matches.filter(r=>r.statusSLA&&r.statusSLA.toLowerCase().includes("lewat")).length,
-    inProgressCount:matches.filter(r=>r.statusNorm.includes("inprogress")||r.statusNorm.includes("in progress")).length,
-    relasiResolved:matches.filter(r=>r.statusNorm.includes("pending")).length
+  // Ambil hanya dari baris yang statusSLA mengandung "lewat"
+  const lewatRows = matches.filter(r => (r.statusSLA||"").toString().toLowerCase().includes("lewat"));
+  let chosenDurasiSLA = "0";
+  if(lewatRows.length){
+    lewatRows.sort((a,b)=>{
+      const ta = a.tanggalDiambil || "";
+      const tb = b.tanggalDiambil || "";
+      if(ta > tb) return -1;
+      if(ta < tb) return 1;
+      return 0;
+    });
+    const candidate = (lewatRows[0].umurRaw || "").toString();
+    const extracted = candidate.slice(-8).trim();
+    chosenDurasiSLA = extracted ? extracted : "0";
+  }
+
+  // ===== DETEKSI EARLY MORNING (00:00–06:00) PADA TANGGAL HARI INI
+  // Important: lakukan pemindaian pada seluruh csvData (bukan matches) sehingga toggle Siang tidak mempengaruhi.
+  let earlyMorningFlag = false;
+  const modeNow = document.getElementById("shiftInput").value.trim().toUpperCase();
+  if(modeNow === "S"){
+    const today = new Date();
+    for(const r of csvData){
+      // match nama: sama aturan seperti di atas (IDX exact, else similarity threshold)
+      if(modeNow === "IDX"){
+        // unreachable here, but keep consistent
+        if(normalizeName(r.diambilOleh) !== keyNama) continue;
+      } else {
+        if(similarity(nama, r.diambilOleh) < thr) continue;
+      }
+      // parse tanggalDiambil
+      const parsed = parseDateTime(r.tanggalDiambil);
+      if(!parsed || isNaN(parsed)) continue;
+      if(parsed.getFullYear() === today.getFullYear() && parsed.getMonth() === today.getMonth() && parsed.getDate() === today.getDate()){
+        const h = parsed.getHours();
+        if(h >= 0 && h <= 6){
+          earlyMorningFlag = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return {
+    avg: sum / matches.length,
+    count: matches.length,
+    lastTime: ambilJamDariTanggal(latest),
+    slaCount: matches.filter(rr=> rr.statusSLA && rr.statusSLA.toLowerCase().includes("lewat")).length,
+    durasiSLA: chosenDurasiSLA,
+    inProgressCount: matches.filter(rr=> rr.statusNorm.includes("inprogress")||rr.statusNorm.includes("in progress")).length,
+    relasiResolved: matches.filter(rr=> rr.statusNorm.includes("pending")).length,
+    earlyMorning: earlyMorningFlag
   };
 }
+
+/* levenshtein + similarity */
+function levenshtein(a,b){ a=a||""; b=b||""; const al=a.length, bl=b.length; if(!al) return bl; if(!bl) return al;
+  const dp=Array.from({length:al+1},()=>Array(bl+1).fill(0));
+  for(let i=0;i<=al;i++) dp[i][0]=i; for(let j=0;j<=bl;j++) dp[0][j]=j;
+  for(let i=1;i<=al;i++) for(let j=1;j<=bl;j++) dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+  return dp[al][bl];
+}
+function similarity(a,b){ a=normalizeName(a); b=normalizeName(b); if(!a||!b) return 0; const d=levenshtein(a,b); return 1 - d / Math.max(a.length,b.length); }
 
 /* ====== HITUNG & RENDER TABEL (Generate Button) ====== */
 document.getElementById("generateBtn").addEventListener("click", async ()=>{
@@ -754,80 +814,40 @@ function sortColumn(key){
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
 }
 
-/* ====== DOWNLOAD JPG ====== */
-const downloadBtn = document.getElementById("downloadBtn");
-if (downloadBtn) {
-  downloadBtn.addEventListener("click", async () => {
-    const area = document.querySelector("#resultArea");
-    const canvas = await html2canvas(area, { scale: 2 });
-    const link = document.createElement("a");
-    link.download = "Laporan_Index_Shift.jpg";
-    link.href = canvas.toDataURL("image/jpeg");
-    link.click();
-  });
-}
-/* ====== SHARE WHATSAPP (TANPA MENGUBAH LAYOUT) ====== */
-document.getElementById("shareBtn").addEventListener("click", async () => {
-  const judul = document.getElementById("judulLaporan");
-  const resultArea = document.getElementById("resultArea");
-  const statusText = document.getElementById("statusText");
+/* ====== SHARE VIA WHATSAPP WEB ====== */
+document.getElementById("shareBtn")?.addEventListener("click", async () => {
+  const area = document.querySelector("#resultArea");
+  if (!area) return alert("Area laporan tidak ditemukan.");
 
-  statusText.textContent = "Menyiapkan gambar untuk WhatsApp...";
+  // generate gambar
+  const canvas = await html2canvas(area, { scale: 2 });
+  const blob = await new Promise(resolve =>
+    canvas.toBlob(resolve, "image/jpeg", 0.95)
+  );
 
-  /* === CLONE INVISIBLE (TIDAK MENGGANGGU HALAMAN) === */
-  const cloneWrapper = document.createElement("div");
-  cloneWrapper.style.position = "fixed";
-  cloneWrapper.style.left = "-99999px";
-  cloneWrapper.style.top = "0";
-  cloneWrapper.style.background = "#ffffff";
-  cloneWrapper.style.display = "inline-block";
-  cloneWrapper.style.padding = "16px";
-
-  cloneWrapper.appendChild(judul.cloneNode(true));
-  cloneWrapper.appendChild(resultArea.cloneNode(true));
-
-  document.body.appendChild(cloneWrapper);
-
-  try {
-    const canvas = await html2canvas(cloneWrapper, {
-      backgroundColor: "#ffffff",
-      scale: 2
-    });
-
-    document.body.removeChild(cloneWrapper);
-
-    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-    if (isMobile && navigator.share) {
-      canvas.toBlob(async blob => {
-        const file = new File([blob], "Laporan_Index_CO.jpg", { type: "image/jpeg" });
-        await navigator.share({
-          files: [file],
-          title: "Laporan Index CO"
-        });
-        statusText.textContent = "✅ Berhasil dibagikan ke WhatsApp";
-      }, "image/jpeg", 0.9);
-    } else {
-      canvas.toBlob(async blob => {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob })
-        ]);
-        alert(
-          "Gambar berhasil disalin.\n\n" +
-          "Buka WhatsApp Web / Desktop\n" +
-          "→ pilih chat\n" +
-          "→ tekan CTRL + V"
-        );
-        statusText.textContent = "✅ Gambar siap ditempel ke WhatsApp";
-      });
-    }
-
-  } catch (err) {
-    console.error(err);
-    statusText.textContent = "❌ Gagal share ke WhatsApp";
-    document.body.removeChild(cloneWrapper);
+  if (!blob) {
+    alert("Gagal membuat gambar.");
+    return;
   }
+
+  // download otomatis
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Laporan_Index_Shift.jpg";
+  a.click();
+
+  // buka WhatsApp Web (TEKS SAJA)
+  const text = encodeURIComponent(
+    "Laporan Index CO sudah saya siapkan.\nSilakan attach file JPG yang baru terdownload."
+  );
+
+  window.open(
+    `https://web.whatsapp.com/send?text=${text}`,
+    "_blank"
+  );
 });
+
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
