@@ -179,9 +179,7 @@
 </div>
        <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
-      <button id="shareBtn" class="btn btn-success">
-  📤 Share ke WhatsApp
-</button>
+      <button id="downloadBtn" class="btn btn-outline-primary">Download JPG</button>
     </div>
   </div>
 
@@ -814,38 +812,14 @@ function sortColumn(key){
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
 }
 
-/* ====== SHARE VIA WHATSAPP WEB ====== */
-document.getElementById("shareBtn")?.addEventListener("click", async () => {
+/* ====== DOWNLOAD JPG ====== */
+document.getElementById("downloadBtn").addEventListener("click", async () => {
   const area = document.querySelector("#resultArea");
-  if (!area) return alert("Area laporan tidak ditemukan.");
-
-  // generate gambar
   const canvas = await html2canvas(area, { scale: 2 });
-  const blob = await new Promise(resolve =>
-    canvas.toBlob(resolve, "image/jpeg", 0.95)
-  );
-
-  if (!blob) {
-    alert("Gagal membuat gambar.");
-    return;
-  }
-
-  // download otomatis
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "Laporan_Index_Shift.jpg";
-  a.click();
-
-  // buka WhatsApp Web (TEKS SAJA)
-  const text = encodeURIComponent(
-    "Laporan Index CO sudah saya siapkan.\nSilakan attach file JPG yang baru terdownload."
-  );
-
-  window.open(
-    `https://web.whatsapp.com/send?text=${text}`,
-    "_blank"
-  );
+  const link = document.createElement("a");
+  link.download = "Laporan_Index_Shift.jpg";
+  link.href = canvas.toDataURL("image/jpeg");
+  link.click();
 });
 
 /* ====== UI helper for toggle siang and button states ====== */
@@ -912,8 +886,6 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
-
-
 
 
 
