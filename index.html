@@ -163,6 +163,11 @@ body.dark-mode .btn-outline-success {
     .hdr-arrow { font-weight: 700; margin-left: 6px; font-size: 0.9em; }
 
     #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
+    
+    #themeToggle {
+  white-space: nowrap;
+  z-index: 5;
+}
 
     @media (max-width: 600px){
       .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
@@ -174,10 +179,11 @@ body.dark-mode .btn-outline-success {
 <body>
 <div class="container">
   <div class="site-top d-flex justify-content-between align-items-center" role="banner" aria-label="Header Pengumuman">
-  <div class="d-flex align-items-center gap-3">
-    <h1 class="title"></h1>
-    <div class="marquee-wrap">
-      <div class="marquee" id="mainMarquee" aria-live="polite" style="--marquee-duration:30s;">
+  <div class="site-top d-flex align-items-center" role="banner">
+  <h1 class="title me-3"></h1>
+
+  <div class="marquee-wrap flex-grow-1">
+    <div class="marquee" id="mainMarquee" style="--marquee-duration:30s;">
         <span class="item">JANGAN LUPA SELALU CEK INDEX HARI INI &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT KUNING UNTUK INDEX DIATAS 0.35 &nbsp; • &nbsp;</span>
@@ -195,8 +201,11 @@ body.dark-mode .btn-outline-success {
       </div>
     </div>
   </div>
-<button id="themeToggle" class="btn btn-sm btn-outline-light">
-    🌙 Dark
+<button
+    id="themeToggle"
+    class="btn btn-sm btn-outline-light ms-3 flex-shrink-0"
+    title="Toggle Dark Mode">
+    🌙
   </button>
 </div>
   <div class="content-area">
@@ -1117,6 +1126,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
