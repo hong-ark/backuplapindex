@@ -16,6 +16,54 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
+    /* ============================= */
+/* PAGE LAYOUT CLEAN             */
+/* ============================= */
+
+body {
+  min-height: 100vh;
+}
+
+/* header full width */
+.site-top {
+  width: 100%;
+}
+
+/* main wrapper */
+.main-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px 80px;
+}
+
+/* content card */
+.content-card {
+  width: 100%;
+  max-width: 1200px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* dark mode card */
+body.dark-mode .content-card {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* table responsive */
+#resultArea {
+  overflow-x: auto;
+}
+
+/* footer */
+#copyright {
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.75;
+  padding: 20px 0;
+}
+
     /* ===================== */
 /* THEME VARIABLES       */
 /* ===================== */
@@ -1252,6 +1300,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </button>
 </body>
 </html>
+
 
 
 
