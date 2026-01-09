@@ -73,6 +73,17 @@ body.dark-mode .table {
 }
 
 /* warning & danger tetap terbaca */
+body:not(.dark-mode) .table-danger td {
+  background-color: #ffeaea !important;
+  color: #000 !important;
+}
+
+body:not(.dark-mode) .table-index-warning td {
+  background-color: #ffcc80 !important;
+  color: #000 !important;
+}
+
+/* versi dark */
 body.dark-mode .table-danger td {
   background-color: #4a1f1f !important;
   color: #fff !important;
@@ -82,6 +93,7 @@ body.dark-mode .table-index-warning td {
   background-color: #5c3b00 !important;
   color: #fff !important;
 }
+
 
 /* modal */
 body.dark-mode .modal-content {
@@ -1126,6 +1138,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
