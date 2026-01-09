@@ -103,9 +103,20 @@ body.dark-mode .btn-outline-success {
   border-color: #7CFC98;
 }
 
-    body { background: #f6f7fb; padding: 20px; font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    .container { max-width: 1100px; background: white; border-radius: 10px; padding: 0;
-                 box-shadow: 0 2px 6px rgba(0,0,0,0.1); overflow: hidden; margin: 0 auto; }
+    body {
+  background: var(--bg-body);
+  color: var(--text-main);
+  padding: 20px;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.container {
+  background: var(--bg-card);
+}
+
+#judulLaporan {
+  color: var(--text-main);
+}
 
     .site-top {
       background: linear-gradient(#2286d2, #1976d2);
@@ -189,7 +200,7 @@ body.dark-mode .btn-outline-success {
   </button>
 </div>
   <div class="content-area">
-    <p style="margin:0 0 12px 0;color:#333">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
+    <p class="text-muted" style="margin:0 0 12px 0">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
 
     <div class="mb-3 row align-items-end">
       <div class="col-auto">
@@ -222,7 +233,7 @@ body.dark-mode .btn-outline-success {
   <label class="form-label">Upload CSV</label>
   <input type="file" id="csvFile" class="form-control" accept=".csv" />
   
-  <span id="progressContainer" class="d-none ms-2 fw-bold text-success" style="font-size: 14px;">
+  <span id="progressContainerUpload" class="d-none ms-2 fw-bold text-success" style="font-size: 14px;">
   Uploading: <span id="progressPercent">0%</span>
 </span>
 </div>
@@ -965,7 +976,10 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   cloneWrapper.style.position = "fixed";
   cloneWrapper.style.left = "-99999px";
   cloneWrapper.style.top = "0";
-  cloneWrapper.style.background = "#ffffff";
+  cloneWrapper.style.background =
+  document.body.classList.contains("dark-mode")
+    ? "#1e1e1e"
+    : "#ffffff";
   cloneWrapper.style.display = "inline-block";
   cloneWrapper.style.padding = "16px";
 
@@ -975,10 +989,12 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   document.body.appendChild(cloneWrapper);
 
   try {
-    const canvas = await html2canvas(cloneWrapper, {
-      backgroundColor: "#ffffff",
-      scale: 2
-    });
+   const canvas = await html2canvas(cloneWrapper, {
+  backgroundColor: document.body.classList.contains("dark-mode")
+    ? "#1e1e1e"
+    : "#ffffff",
+  scale: 2
+});
 
     document.body.removeChild(cloneWrapper);
 
@@ -1101,6 +1117,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
