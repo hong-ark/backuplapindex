@@ -85,12 +85,14 @@
         <span class="item">CHECKLIST HITUNG SLA MULAI ≥ 13:00 HANYA UNTUK MENAMPILKAN PENGHITUNGAN PASCA SHIFT MALAM MASUK SIANG, HILANGKAN CHECKLIST UNTUK MENGHITUNG INDEX TOTALNYA &nbsp; • &nbsp;</span>
         <span class="item">MENU CARI KOMPLAIN UNTUK TRACKING CO DARI REKAPAN FILE YANG SUDAH DIUPLOAD &nbsp; • &nbsp;</span>
         
+        
         <!-- duplikat untuk loop seamless -->
         <span class="item">JANGAN LUPA SELALU CEK INDEX HARI INI &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT KUNING UNTUK INDEX DIATAS 0.35 &nbsp; • &nbsp;</span>
         <span class="item">CHECKLIST HITUNG SLA MULAI ≥ 13:00 HANYA UNTUK MENAMPILKAN PENGHITUNGAN PASCA SHIFT MALAM MASUK SIANG, HILANGKAN CHECKLIST UNTUK MENGHITUNG INDEX TOTALNYA &nbsp; • &nbsp;</span>
         <span class="item">MENU CARI KOMPLAIN UNTUK TRACKING CO DARI REKAPAN FILE YANG SUDAH DIUPLOAD &nbsp; • &nbsp;</span>
+        
       </div>
     </div>
   </div>
@@ -126,19 +128,25 @@
     <hr>
 
     <div class="mb-3">
-      <label class="form-label">Upload CSV</label>
-      <input type="file" id="csvFile" class="form-control" accept=".csv" />
-    </div>
+  <label class="form-label">Upload CSV</label>
+  <input type="file" id="csvFile" class="form-control" accept=".csv" />
+  
+  <span id="progressContainer" class="d-none ms-2 fw-bold text-success" style="font-size: 14px;">
+  Uploading: <span id="progressPercent">0%</span>
+</span>
+</div>
 
     <div class="d-flex justify-content-between align-items-center mb-1">
   <!-- KIRI -->
-  <div class="d-flex align-items-center gap-2">
-    <button id="generateBtn" class="btn btn-success" disabled>
-      Hitung Index
-    </button>
-    <span id="statusText" class="text-muted"></span>
-  </div>
-
+ <div class="d-flex align-items-center gap-2">
+  <button id="generateBtn" class="btn btn-success" disabled>
+    Hitung Index
+  </button>
+  <span id="progressContainer" class="d-none fw-bold text-success" style="font-size: 14px;">
+    Uploading: <span id="progressPercent">0%</span>
+  </span>
+  <span id="statusText" class="text-muted"></span>
+</div>
   <!-- KANAN -->
   <a href="https://hong-ark.github.io/laporanindex/search.html"
      target="_blank"
@@ -179,7 +187,7 @@
 </div>
        <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
-      <button id="downloadBtn" class="btn btn-outline-primary">Download JPG</button>
+      <button id="shareBtn" class="btn btn-success">Share ke WhatsApp</button>
     </div>
   </div>
 
@@ -206,7 +214,7 @@
 /* ====== KONFIG / STATE ====== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx4dWdi4tSGqHN3WQ89Za1wyklGj1eLfcNPwqBeLa15aLUKrzjncKvySo07-9GuqxPD0g/exec";
 const HISTORY_GAS_URL = "https://script.google.com/macros/s/AKfycbwrXZlIB4nyiQtb-MM79c8rm1rDuoVyEZRxdk4-yTHaM_teOWR-XxC_BK50RsVlmo-P/exec";
-const DATA_GAS_URL = "https://script.google.com/macros/s/AKfycbxjKAOxUdGMPqnt741N_geiDVBEsYBiVUdhIHWqb60ktCnZn6bTevlcCEYcON4OWWAlXg/exec"; // SHEET = DATA
+const DATA_GAS_URL = "https://script.google.com/macros/s/AKfycbxTsw4JoQfyVcS9JE3e33VayBckQ8IIztoAEoHq9XhvEkcUz90f70IEGXxsdB2mSjlgdg/exec"; // SHEET = DATA
 
 
 let sheetData = [], csvData = [], lastResults = [];
@@ -383,11 +391,32 @@ async function renderHistoryList(){
 }
 
 /* ====== CSV LOAD ====== */
-  async function kirimCsvKeGoogleSheetDATA(csvRows) {
+  /* ====== CSV LOAD ====== */
+async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
 
+  const progContainer = document.getElementById("progressContainer");
+  const progPercent = document.getElementById("progressPercent");
+  const statusText = document.getElementById("statusText");
+
+  // Reset tampilan status & munculkan persentase
+  progContainer.classList.remove("d-none");
+  progContainer.classList.remove("text-danger");
+  progContainer.classList.add("text-success");
+  progPercent.textContent = "0%";
+  statusText.textContent = "";
+
+  let progressVal = 0; // Ganti nama agar tidak bentrok
+  const progressInterval = setInterval(() => {
+    if (progressVal < 85) {
+      progressVal += Math.random() * 15;
+      if (progressVal > 85) progressVal = 85;
+      progPercent.textContent = Math.round(progressVal) + "%";
+    }
+  }, 300);
+
   const sheetRows = csvRows.map(r => [
-    "",
+    "", // No
     r["No Komplain"] || "",
     r["Jenis Komplain"] || "",
     r["Kategori Masalah"] || "",
@@ -433,18 +462,26 @@ async function renderHistoryList(){
   try {
     await fetch(DATA_GAS_URL, {
       method: "POST",
-      mode: "no-cors", // aman untuk GitHub Pages
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ rows: sheetRows })
     });
 
-    document.getElementById("statusText").textContent =
-      "✅ DATA berhasil dikirim ke Google Sheet DATA";
+    // Berhasil
+    clearInterval(progressInterval);
+    progPercent.textContent = "100%";
+    statusText.textContent = " ✅ DATA Terkirim";
+
+    setTimeout(() => {
+      progContainer.classList.add("d-none");
+    }, 3000);
 
   } catch (err) {
-    alert("❌ Error kirim DATA: " + err.message);
+    clearInterval(progressInterval);
+    progPercent.textContent = "ERR";
+    progContainer.classList.replace("text-success", "text-danger");
+    statusText.textContent = " ❌ Gagal Kirim";
+    console.error(err);
   }
 }
 
@@ -813,15 +850,79 @@ function sortColumn(key){
 }
 
 /* ====== DOWNLOAD JPG ====== */
-document.getElementById("downloadBtn").addEventListener("click", async () => {
-  const area = document.querySelector("#resultArea");
-  const canvas = await html2canvas(area, { scale: 2 });
-  const link = document.createElement("a");
-  link.download = "Laporan_Index_Shift.jpg";
-  link.href = canvas.toDataURL("image/jpeg");
-  link.click();
-});
+const downloadBtn = document.getElementById("downloadBtn");
+if (downloadBtn) {
+  downloadBtn.addEventListener("click", async () => {
+    const area = document.querySelector("#resultArea");
+    const canvas = await html2canvas(area, { scale: 2 });
+    const link = document.createElement("a");
+    link.download = "Laporan_Index_Shift.jpg";
+    link.href = canvas.toDataURL("image/jpeg");
+    link.click();
+  });
+}
+/* ====== SHARE WHATSAPP (TANPA MENGUBAH LAYOUT) ====== */
+document.getElementById("shareBtn").addEventListener("click", async () => {
+  const judul = document.getElementById("judulLaporan");
+  const resultArea = document.getElementById("resultArea");
+  const statusText = document.getElementById("statusText");
 
+  statusText.textContent = "Menyiapkan gambar untuk WhatsApp...";
+
+  /* === CLONE INVISIBLE (TIDAK MENGGANGGU HALAMAN) === */
+  const cloneWrapper = document.createElement("div");
+  cloneWrapper.style.position = "fixed";
+  cloneWrapper.style.left = "-99999px";
+  cloneWrapper.style.top = "0";
+  cloneWrapper.style.background = "#ffffff";
+  cloneWrapper.style.display = "inline-block";
+  cloneWrapper.style.padding = "16px";
+
+  cloneWrapper.appendChild(judul.cloneNode(true));
+  cloneWrapper.appendChild(resultArea.cloneNode(true));
+
+  document.body.appendChild(cloneWrapper);
+
+  try {
+    const canvas = await html2canvas(cloneWrapper, {
+      backgroundColor: "#ffffff",
+      scale: 2
+    });
+
+    document.body.removeChild(cloneWrapper);
+
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
+      canvas.toBlob(async blob => {
+        const file = new File([blob], "Laporan_Index_CO.jpg", { type: "image/jpeg" });
+        await navigator.share({
+          files: [file],
+          title: "Laporan Index CO"
+        });
+        statusText.textContent = "✅ Berhasil dibagikan ke WhatsApp";
+      }, "image/jpeg", 0.9);
+    } else {
+      canvas.toBlob(async blob => {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob })
+        ]);
+        alert(
+          "Gambar berhasil disalin.\n\n" +
+          "Buka WhatsApp Web / Desktop\n" +
+          "→ pilih chat\n" +
+          "→ tekan CTRL + V"
+        );
+        statusText.textContent = "✅ Gambar siap ditempel ke WhatsApp";
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    statusText.textContent = "❌ Gagal share ke WhatsApp";
+    document.body.removeChild(cloneWrapper);
+  }
+});
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -886,6 +987,13 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
 
 
 
