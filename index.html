@@ -185,6 +185,89 @@ body.dark-mode .btn-outline-success {
       .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
       .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
     }
+    /* ============================= */
+/* DARK MODE — TABLE CLEAN FIX   */
+/* ============================= */
+
+/* warna dasar teks table */
+body.dark-mode table,
+body.dark-mode table td,
+body.dark-mode table th {
+  color: #eaeaea !important;
+}
+
+/* background table */
+body.dark-mode .table {
+  --bs-table-bg: #1e1e1e;
+  --bs-table-color: #eaeaea;
+  --bs-table-border-color: #333;
+}
+
+/* striping */
+body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: #232323;
+}
+
+body.dark-mode .table-striped > tbody > tr:nth-of-type(even) {
+  background-color: #1e1e1e;
+}
+
+/* hover */
+body.dark-mode .table-hover > tbody > tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* header table */
+body.dark-mode #resultTable thead th {
+  background-color: #0d47a1 !important;
+  border-color: #0b3c8a !important;
+  color: #ffffff !important;
+}
+
+/* ============================= */
+/* ROW STATUS (LIGHT vs DARK)    */
+/* ============================= */
+
+/* LIGHT MODE */
+body:not(.dark-mode) .table-danger td {
+  background-color: #ffeaea !important;
+  color: #000 !important;
+}
+
+body:not(.dark-mode) .table-index-warning td {
+  background-color: #ffcc80 !important;
+  color: #000 !important;
+}
+
+/* DARK MODE */
+body.dark-mode .table-danger td {
+  background-color: #4a1f1f !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .table-index-warning td {
+  background-color: #5c3b00 !important;
+  color: #ffffff !important;
+}
+
+/* ============================= */
+/* ALIGN & READABILITY           */
+/* ============================= */
+
+body.dark-mode #resultTable td {
+  vertical-align: middle;
+}
+
+body.dark-mode #resultTable td:first-child,
+body.dark-mode #resultTable th:first-child {
+  text-align: center;
+}
+
+/* nama karyawan */
+body.dark-mode #resultTable td:nth-child(2) {
+  font-weight: 500;
+}
+
   </style>
 </head>
 
@@ -1138,6 +1221,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 </script>
 </body>
 </html>
+
 
 
 
