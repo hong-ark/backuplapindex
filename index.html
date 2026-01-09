@@ -186,6 +186,39 @@ body.dark-mode .btn-outline-success {
       .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
     }
     /* ============================= */
+/* FLOATING DARK MODE TOGGLE    */
+/* ============================= */
+
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 9999;
+
+  background: #1976d2;
+  color: #fff;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transition: all 0.25s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.08);
+}
+
+/* dark mode toggle */
+body.dark-mode .theme-toggle {
+  background: #fbc02d;
+  color: #000;
+}
+
+    /* ============================= */
 /* DARK MODE — TABLE CLEAN FIX   */
 /* ============================= */
 
@@ -272,12 +305,10 @@ body.dark-mode #resultTable td:nth-child(2) {
 </head>
 
 <body>
-<div class="container">
-  <div class="site-top d-flex align-items-center" role="banner">
-
+<header class="site-top">
   <h1 class="title me-3"></h1>
 
-  <div class="marquee-wrap flex-grow-1">
+  <div class="marquee-wrap">
     <div class="marquee" id="mainMarquee" style="--marquee-duration:30s;">
         <span class="item">JANGAN LUPA SELALU CEK INDEX HARI INI &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
@@ -293,17 +324,13 @@ body.dark-mode #resultTable td:nth-child(2) {
         <span class="item">CHECKLIST HITUNG SLA MULAI ≥ 13:00 HANYA UNTUK MENAMPILKAN PENGHITUNGAN PASCA SHIFT MALAM MASUK SIANG, HILANGKAN CHECKLIST UNTUK MENGHITUNG INDEX TOTALNYA &nbsp; • &nbsp;</span>
         <span class="item">MENU CARI KOMPLAIN UNTUK TRACKING CO DARI REKAPAN FILE YANG SUDAH DIUPLOAD &nbsp; • &nbsp;</span>
         
-      </div>
-    </div>
+        </div>
   </div>
-<button
-    id="themeToggle"
-    class="btn btn-sm btn-outline-light ms-3 flex-shrink-0"
-    title="Toggle Dark Mode">
-    🌙
-  </button>
-</div>
-  <div class="content-area">
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main-wrapper">
+  <div class="content-card">
     <p class="text-muted" style="margin:0 0 12px 0">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
 
     <div class="mb-3 row align-items-end">
@@ -394,11 +421,12 @@ body.dark-mode #resultTable td:nth-child(2) {
        <div class="d-flex justify-content-end gap-2 mt-3">
       <button id="historyBtn" class="btn btn-secondary">History</button>
       <button id="shareBtn" class="btn btn-success">Share ke WhatsApp</button>
-    </div>
-  </div>
+      </div>
+</main>
 
-  <div id="copyright">© 2025 EDP Fai</div>
-</div>
+<footer id="copyright">© 2025 EDP Fai</footer>
+
+</body>
 
 <!-- Modal History -->
 <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
@@ -1219,8 +1247,12 @@ document.addEventListener("DOMContentLoaded", ()=> {
 })();
 
 </script>
+<button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">
+  🌙
+</button>
 </body>
 </html>
+
 
 
 
