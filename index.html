@@ -16,6 +16,93 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
+    /* ===================== */
+/* THEME VARIABLES       */
+/* ===================== */
+:root {
+  --bg-body: #f6f7fb;
+  --bg-card: #ffffff;
+  --text-main: #000000;
+  --text-muted: #555;
+  --table-border: #dee2e6;
+}
+
+body {
+  background: var(--bg-body);
+  color: var(--text-main);
+}
+
+.container {
+  background: var(--bg-card);
+}
+
+/* ===================== */
+/* DARK MODE             */
+/* ===================== */
+body.dark-mode {
+  --bg-body: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #eaeaea;
+  --text-muted: #aaaaaa;
+  --table-border: #333;
+}
+
+/* text */
+body.dark-mode,
+body.dark-mode p,
+body.dark-mode label,
+body.dark-mode #judulLaporan {
+  color: var(--text-main) !important;
+}
+
+/* muted text */
+body.dark-mode .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* table */
+body.dark-mode table {
+  color: var(--text-main);
+}
+
+body.dark-mode .table {
+  --bs-table-bg: #1e1e1e;
+  --bs-table-striped-bg: #242424;
+  --bs-table-striped-color: #eaeaea;
+  --bs-table-border-color: var(--table-border);
+}
+
+/* warning & danger tetap terbaca */
+body.dark-mode .table-danger td {
+  background-color: #4a1f1f !important;
+  color: #fff !important;
+}
+
+body.dark-mode .table-index-warning td {
+  background-color: #5c3b00 !important;
+  color: #fff !important;
+}
+
+/* modal */
+body.dark-mode .modal-content {
+  background-color: #1e1e1e;
+  color: #eaeaea;
+}
+
+/* form */
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background-color: #2a2a2a;
+  color: #fff;
+  border-color: #444;
+}
+
+/* button outline */
+body.dark-mode .btn-outline-success {
+  color: #7CFC98;
+  border-color: #7CFC98;
+}
+
     body { background: #f6f7fb; padding: 20px; font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial; }
     .container { max-width: 1100px; background: white; border-radius: 10px; padding: 0;
                  box-shadow: 0 2px 6px rgba(0,0,0,0.1); overflow: hidden; margin: 0 auto; }
@@ -75,9 +162,10 @@
 
 <body>
 <div class="container">
-  <div class="site-top" role="banner" aria-label="Header Pengumuman">
+  <div class="site-top d-flex justify-content-between align-items-center" role="banner" aria-label="Header Pengumuman">
+  <div class="d-flex align-items-center gap-3">
     <h1 class="title"></h1>
-    <div class="marquee-wrap" aria-hidden="false" role="region" aria-label="Pengumuman penting">
+    <div class="marquee-wrap">
       <div class="marquee" id="mainMarquee" aria-live="polite" style="--marquee-duration:30s;">
         <span class="item">JANGAN LUPA SELALU CEK INDEX HARI INI &nbsp; • &nbsp;</span>
         <span class="item">HIGHLIGHT MERAH UNTUK SLA &nbsp; • &nbsp;</span>
@@ -96,7 +184,10 @@
       </div>
     </div>
   </div>
-
+<button id="themeToggle" class="btn btn-sm btn-outline-light">
+    🌙 Dark
+  </button>
+</div>
   <div class="content-area">
     <p style="margin:0 0 12px 0;color:#333">Pilih shift → Generate Jadwal → Upload CSV → Hitung Index</p>
 
@@ -984,9 +1075,33 @@ document.addEventListener("DOMContentLoaded", ()=> {
   loadLastUpdate();
   setInterval(loadLastUpdate, 600000); // refresh tiap 10 menit
 });
+  /* ===================== */
+/* DARK MODE TOGGLE     */
+/* ===================== */
+(function () {
+  const toggleBtn = document.getElementById("themeToggle");
+  const body = document.body;
+
+  // load saved theme
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    body.classList.add("dark-mode");
+    toggleBtn.textContent = "☀️ Light";
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    body.classList.toggle("dark-mode");
+    const isDark = body.classList.contains("dark-mode");
+
+    toggleBtn.textContent = isDark ? "☀️ Light" : "🌙 Dark";
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  });
+})();
+
 </script>
 </body>
 </html>
+
 
 
 
