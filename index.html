@@ -940,7 +940,8 @@ if (downloadBtn) {
 /* ====== SHARE WHATSAPP (TANPA MENGUBAH LAYOUT) ====== */
 document.getElementById("shareBtn").addEventListener("click", async () => {
   const judul = document.getElementById("judulLaporan");
-  const resultArea = document.getElementById("resultArea");
+  const table = document.getElementById("resultTable");
+  const lastUpdate = document.getElementById("lastUpdate");
   const statusText = document.getElementById("statusText");
 
   const isDark =
@@ -948,32 +949,37 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
 
   statusText.textContent = "Menyiapkan gambar laporan...";
 
-  /* === WRAPPER BARU (BENAR-BENAR BERSIH) === */
+  /* === WRAPPER FIXED SIZE (WA OPTIMAL) === */
   const cloneWrapper = document.createElement("div");
   cloneWrapper.style.position = "fixed";
-  cloneWrapper.style.left = "0";
+  cloneWrapper.style.left = "-10000px";
   cloneWrapper.style.top = "0";
-  cloneWrapper.style.zIndex = "-9999";
   cloneWrapper.style.background = isDark ? "#121212" : "#ffffff";
   cloneWrapper.style.color = isDark ? "#e0e0e0" : "#000000";
-  cloneWrapper.style.padding = "0";
+  cloneWrapper.style.padding = "16px";
   cloneWrapper.style.margin = "0";
-  cloneWrapper.style.display = "inline-block";
-  cloneWrapper.style.width = "fit-content";
+  cloneWrapper.style.width = "1100px";   // 🔥 SAMA DENGAN CONTAINER
   cloneWrapper.style.fontFamily = "Segoe UI, Arial, sans-serif";
 
-  /* === CLONE ISI LAPORAN SAJA === */
+  /* === JUDUL === */
   const judulClone = judul.cloneNode(true);
-  judulClone.style.margin = "0";
-  judulClone.style.padding = "12px 0";
+  judulClone.style.margin = "0 0 12px 0";
+  judulClone.style.padding = "0";
   judulClone.style.textAlign = "center";
 
-  const resultClone = resultArea.cloneNode(true);
-  resultClone.style.margin = "0";
-  resultClone.style.padding = "0";
+  /* === TABLE ONLY (BUKAN resultArea) === */
+  const tableClone = table.cloneNode(true);
+  tableClone.style.margin = "0";
+  tableClone.style.width = "100%";
+
+  /* === LAST UPDATE === */
+  const lastClone = lastUpdate.cloneNode(true);
+  lastClone.style.marginTop = "8px";
+  lastClone.style.fontSize = "13px";
 
   cloneWrapper.appendChild(judulClone);
-  cloneWrapper.appendChild(resultClone);
+  cloneWrapper.appendChild(tableClone);
+  cloneWrapper.appendChild(lastClone);
 
   document.body.appendChild(cloneWrapper);
 
@@ -986,16 +992,15 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
 
     document.body.removeChild(cloneWrapper);
 
-    canvas.toBlob(async blob => {
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob })
-      ]);
-      alert(
-        "Gambar laporan berhasil dicopy.\n\n" +
-        "Paste (Ctrl+V) langsung ke WhatsApp."
-      );
-      statusText.textContent = "✅ Gambar siap dikirim ke WhatsApp";
-    });
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": await new Promise(r => canvas.toBlob(r)) })
+    ]);
+
+    alert(
+      "Gambar laporan berhasil dicopy.\n\n" +
+      "Paste (Ctrl+V) langsung ke WhatsApp."
+    );
+    statusText.textContent = "✅ Gambar siap dikirim ke WhatsApp";
 
   } catch (err) {
     console.error(err);
@@ -1004,9 +1009,8 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   }
 });
 
-  document.getElementById("shareBtn").addEventListener("click", function() {
-    const element = document.querySelector(".container"); 
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+
     
     // Status teks sementara agar user tahu proses sedang berjalan
     const originalText = this.innerText;
@@ -1122,6 +1126,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
