@@ -16,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
+  
     /* --- Tambahan Dark Mode --- */
 :root {
   --bg-body: #f6f7fb;
@@ -29,6 +30,26 @@
   --bg-card: #1e1e1e;
   --text-main: #e0e0e0;
   --border-color: #333333;
+}
+    /* Menyesuaikan area luar saat export/copy di Dark Mode */
+[data-bs-theme="dark"] body {
+    background-color: #121212 !important;
+}
+
+[data-bs-theme="dark"] .container {
+    background-color: #1e1e1e !important;
+    border: none !important;
+}
+
+/* Pastikan teks "Last update data" di bawah tabel juga jadi putih */
+[data-bs-theme="dark"] .last-update-text, 
+[data-bs-theme="dark"] #copyright {
+    color: #aaaaaa !important;
+}
+
+/* Menghilangkan shadow putih yang mungkin muncul di sekitar container */
+[data-bs-theme="dark"] .container {
+    box-shadow: none !important;
 }
 /* Pastikan judul laporan berubah jadi putih saat dark mode */
 [data-bs-theme="dark"] #judulLaporan {
@@ -1070,6 +1091,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
