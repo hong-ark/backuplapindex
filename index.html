@@ -30,7 +30,15 @@
   --text-main: #e0e0e0;
   --border-color: #333333;
 }
+/* Pastikan judul laporan berubah jadi putih saat dark mode */
+[data-bs-theme="dark"] #judulLaporan {
+    color: #ffffff !important;
+}
 
+/* Tambahan: pastikan teks instruksi di atas select shift juga terbaca */
+[data-bs-theme="dark"] .content-area p {
+    color: #e0e0e0 !important;
+}
 /* Mengubah variabel body agar mengikuti tema */
 body { background: var(--bg-body) !important; color: var(--text-main); transition: 0.3s; }
 .container { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
@@ -1062,6 +1070,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
