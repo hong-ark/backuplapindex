@@ -999,6 +999,32 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
     document.body.removeChild(cloneWrapper);
   }
 });
+  document.getElementById("shareBtn").addEventListener("click", function() {
+    const element = document.querySelector(".container"); 
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    
+    // Status teks sementara agar user tahu proses sedang berjalan
+    const originalText = this.innerText;
+    this.innerText = "Memproses...";
+
+    html2canvas(element, {
+        backgroundColor: isDark ? "#121212" : "#f6f7fb", // Menyesuaikan background luar
+        scale: 2, // Meningkatkan resolusi gambar agar tidak pecah
+        useCORS: true // Memastikan gambar/icon eksternal ikut terbawa
+    }).then(canvas => {
+        canvas.toBlob(blob => {
+            const item = new ClipboardItem({ "image/png": blob });
+            navigator.clipboard.write([item]).then(() => {
+                alert("Laporan berhasil di-copy ke clipboard! Silakan paste (Ctrl+V) di WhatsApp.");
+                document.getElementById("shareBtn").innerText = originalText;
+            }).catch(err => {
+                console.error("Gagal copy gambar: ", err);
+                alert("Gagal copy gambar. Pastikan browser mengizinkan akses clipboard.");
+                document.getElementById("shareBtn").innerText = originalText;
+            });
+        }, "image/png");
+    });
+});
 /* ====== UI helper for toggle siang and button states ====== */
 function updateToggleSiangAvailability(){
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -1091,6 +1117,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
