@@ -121,7 +121,12 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     .content-area { padding:20px 25px; }
     #judulLaporan { font-weight: 700; font-size: 18px; text-align: center; margin-bottom: 8px; color:#000; }
     #resultTable td { text-align: center; vertical-align: middle; font-size: 0.95rem; }
-
+#top5Area th {
+  font-size: 0.8rem;
+}
+#top5Area td {
+  font-size: 0.85rem;
+}
     #resultTable.table thead tr th {
       background-color: #1976d2 !important; color: #fff !important; text-align: center !important;
       font-weight: 700; cursor: pointer; padding: 10px; user-select: none; vertical-align: middle;
@@ -236,9 +241,36 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
       <label class="form-check-label text-muted" for="toggleSiang14" id="labelToggleSiang14">Hitung Siang mulai ≥ 13:00</label>
     </div>
 
-    <div id="judulLaporan" class="mt-2"></div>
+    <div class="row mt-3">
 
-    <div id="resultArea" class="mt-2">
+  <!-- ===== KIRI: TOP 5 INDEX ===== -->
+  <div class="col-lg-3 col-md-4 mb-3">
+    <div id="top5Area" class="card shadow-sm sticky-top" style="top:80px">
+      <div class="card-header fw-bold text-center">
+        🔥 Top 5 Index Hari Ini
+      </div>
+      <div class="card-body p-2">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0">
+            <thead class="table-primary text-center">
+              <tr>
+                <th>Nama</th>
+                <th>Shift</th>
+                <th>Index</th>
+              </tr>
+            </thead>
+            <tbody id="top5Table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KANAN: TABEL UTAMA ===== -->
+  <div class="col-lg-9 col-md-8">
+    <div id="judulLaporan" class="mb-2"></div>
+
+    <div id="resultArea">
   <table id="resultTable" class="table table-bordered table-striped">
         <thead>
           <tr>
@@ -610,6 +642,8 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
+      autoHitungIndexHariIni(); // 🔥 AUTO
+}
     }});
 });
 
@@ -874,6 +908,73 @@ function escapeHtml(s){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
+  function renderTop5(results){
+  const tbody = document.getElementById("top5Table");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const top5 = results
+    .filter(r => r.res && r.res.avg !== null)
+    .sort((a,b) => (b.res.avg || 0) - (a.res.avg || 0))
+    .slice(0,5);
+
+  if(!top5.length){
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>`;
+    return;
+  }
+
+  top5.forEach(item=>{
+    const avgNum = Number(item.res.avg);
+    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
+
+    const tr = document.createElement("tr");
+
+    // warna sama dengan tabel utama
+    if ((item.res.slaCount || 0) > 0) {
+      tr.classList.add("table-danger");
+    } else if (avgNum > 0.35) {
+      tr.classList.add("table-index-warning");
+    }
+
+    tr.innerHTML = `
+      <td>${escapeHtml(item.k.nama)}</td>
+      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
+      <td class="text-center fw-bold">${avg}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+function autoHitungIndexHariIni(){
+  if(!csvData.length) return;
+
+  document.getElementById("shiftInput").value = "IDX";
+
+  sheetData = buildUniqueNamesFromCSV(csvData);
+  if(!sheetData.length) return;
+
+  let results = sheetData.map(k => ({
+    k,
+    res: rataRata_byName(k.nama)
+  }));
+
+  results.sort((a,b)=>{
+    const av = a.res.avg ?? -Infinity;
+    const bv = b.res.avg ?? -Infinity;
+    return bv - av;
+  });
+
+  lastResults = results;
+
+  renderTop5(results);     // 🔥 PANEL KIRI
+  renderTable(results);    // tabel utama kanan
+
+  document.getElementById("judulLaporan").textContent =
+    `Laporan Index CO — Index Hari Ini — Tanggal ${document.getElementById("tanggalCek").textContent}`;
+}
+
 /* ===== LOAD LAST UPDATE DATA ===== */
 async function loadLastUpdate() {
   try {
