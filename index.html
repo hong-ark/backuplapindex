@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -121,12 +122,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     .content-area { padding:20px 25px; }
     #judulLaporan { font-weight: 700; font-size: 18px; text-align: center; margin-bottom: 8px; color:#000; }
     #resultTable td { text-align: center; vertical-align: middle; font-size: 0.95rem; }
-#top5Area th {
-  font-size: 0.8rem;
-}
-#top5Area td {
-  font-size: 0.85rem;
-}
+
     #resultTable.table thead tr th {
       background-color: #1976d2 !important; color: #fff !important; text-align: center !important;
       font-weight: 700; cursor: pointer; padding: 10px; user-select: none; vertical-align: middle;
@@ -139,6 +135,8 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     .table-index-warning td { background-color: #ffcc80 !important; color: #000 !important; }
 
     .hdr-arrow { font-weight: 700; margin-left: 6px; font-size: 0.9em; }
+
+    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
 #top5Floating {
   position: fixed;
   top: 120px;              /* jarak dari atas (di bawah header) */
@@ -161,8 +159,6 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     display: none;
   }
 }
-
-    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
 
     @media (max-width: 600px){
       .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
@@ -283,11 +279,10 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
       <input class="form-check-input" type="checkbox" id="toggleSiang14" disabled>
       <label class="form-check-label text-muted" for="toggleSiang14" id="labelToggleSiang14">Hitung Siang mulai ≥ 13:00</label>
     </div>
-    <!-- ===== KANAN: TABEL UTAMA ===== -->
-  <div class="col-lg-9 col-md-8">
-    <div id="judulLaporan" class="mb-2"></div>
 
-    <div id="resultArea">
+    <div id="judulLaporan" class="mt-2"></div>
+
+    <div id="resultArea" class="mt-2">
   <table id="resultTable" class="table table-bordered table-striped">
         <thead>
           <tr>
@@ -659,8 +654,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
-      autoHitungIndexHariIni(); // 🔥 AUTO
-}
     }});
 });
 
@@ -925,73 +918,6 @@ function escapeHtml(s){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
-  function renderTop5(results){
-  const tbody = document.getElementById("top5Table");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const top5 = results
-    .filter(r => r.res && r.res.avg !== null)
-    .sort((a,b) => (b.res.avg || 0) - (a.res.avg || 0))
-    .slice(0,5);
-
-  if(!top5.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>`;
-    return;
-  }
-
-  top5.forEach(item=>{
-    const avgNum = Number(item.res.avg);
-    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
-
-    const tr = document.createElement("tr");
-
-    // warna sama dengan tabel utama
-    if ((item.res.slaCount || 0) > 0) {
-      tr.classList.add("table-danger");
-    } else if (avgNum > 0.35) {
-      tr.classList.add("table-index-warning");
-    }
-
-    tr.innerHTML = `
-      <td>${escapeHtml(item.k.nama)}</td>
-      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
-      <td class="text-center fw-bold">${avg}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-function autoHitungIndexHariIni(){
-  if(!csvData.length) return;
-
-  document.getElementById("shiftInput").value = "IDX";
-
-  sheetData = buildUniqueNamesFromCSV(csvData);
-  if(!sheetData.length) return;
-
-  let results = sheetData.map(k => ({
-    k,
-    res: rataRata_byName(k.nama)
-  }));
-
-  results.sort((a,b)=>{
-    const av = a.res.avg ?? -Infinity;
-    const bv = b.res.avg ?? -Infinity;
-    return bv - av;
-  });
-
-  lastResults = results;
-
-  renderTop5(results);     // 🔥 PANEL KIRI
-  renderTable(results);    // tabel utama kanan
-
-  document.getElementById("judulLaporan").textContent =
-    `Laporan Index CO — Index Hari Ini — Tanggal ${document.getElementById("tanggalCek").textContent}`;
-}
-
 /* ===== LOAD LAST UPDATE DATA ===== */
 async function loadLastUpdate() {
   try {
@@ -1223,7 +1149,6 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
 
 
 
