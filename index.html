@@ -510,7 +510,6 @@ async function renderHistoryList(){
   }
 }
 
-/* ====== CSV LOAD ====== */
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
@@ -654,23 +653,31 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
-      if (document.getElementById("shiftInput").value === "IDX") {
-  if(!sheetData.length) sheetData = buildUniqueNamesFromCSV(csvData);
+      // ===== AUTO TOP 5 KHUSUS MODE IDX =====
+if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") {
 
-  const results = sheetData.map(k => ({
-    k,
-    res: rataRata_byName(k.nama)
-  }));
+  if(!sheetData.length) {
+    sheetData = buildUniqueNamesFromCSV(csvData);
+  }
 
-  results.sort((a,b)=>{
-    const av = a.res.avg ?? -Infinity;
-    const bv = b.res.avg ?? -Infinity;
-    return bv - av;
-  });
+  if(sheetData.length){
+    const results = sheetData.map(k => ({
+      k,
+      res: rataRata_byName(k.nama)
+    }));
 
-  lastResults = results;
-  renderTop5(results);
+    results.sort((a,b)=>{
+      const av = a.res.avg ?? -Infinity;
+      const bv = b.res.avg ?? -Infinity;
+      return bv - av;
+    });
+
+    lastResults = results;
+
+    renderTop5(results);   // 🔥 ISI PANEL KIRI
+  }
 }
+
 
     }});
 });
@@ -1212,6 +1219,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
