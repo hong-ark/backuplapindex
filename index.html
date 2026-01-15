@@ -654,6 +654,24 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
+      if (document.getElementById("shiftInput").value === "IDX") {
+  if(!sheetData.length) sheetData = buildUniqueNamesFromCSV(csvData);
+
+  const results = sheetData.map(k => ({
+    k,
+    res: rataRata_byName(k.nama)
+  }));
+
+  results.sort((a,b)=>{
+    const av = a.res.avg ?? -Infinity;
+    const bv = b.res.avg ?? -Infinity;
+    return bv - av;
+  });
+
+  lastResults = results;
+  renderTop5(results);
+}
+
     }});
 });
 
@@ -830,7 +848,10 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-  renderTable(results);
+
+renderTop5(results);   // 🔥 ISI TOP 5
+renderTable(results);  // tabel utama
+
 
   const tgl = document.getElementById("tanggalCek").textContent;
   const judul = document.getElementById("judulLaporan");
@@ -905,6 +926,48 @@ function renderTable(results){
   ["Nama","LastCO","IndexCO","TotalCO","SLA","DurasiSLA","InProgress","RelasiResolved"].forEach(k=>{
     const el = document.getElementById(`sort${k}`);
     if(el) el.onclick = () => sortColumn(k);
+  });
+}
+function renderTop5(results){
+  const tbody = document.getElementById("top5Table");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const top5 = results
+    .filter(r => r.res && r.res.avg !== null)
+    .sort((a,b) => {
+      const av = Number.isFinite(Number(a.res.avg)) ? Number(a.res.avg) : -Infinity;
+      const bv = Number.isFinite(Number(b.res.avg)) ? Number(b.res.avg) : -Infinity;
+      return bv - av;
+    })
+    .slice(0,5);
+
+  if(!top5.length){
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>`;
+    return;
+  }
+
+  top5.forEach(item=>{
+    const avgNum = Number(item.res.avg);
+    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
+
+    const tr = document.createElement("tr");
+
+    if ((item.res.slaCount || 0) > 0) {
+      tr.classList.add("table-danger");
+    } else if (avgNum > 0.35) {
+      tr.classList.add("table-index-warning");
+    }
+
+    tr.innerHTML = `
+      <td>${escapeHtml(item.k.nama)}</td>
+      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
+      <td class="text-center fw-bold">${avg}</td>
+    `;
+
+    tbody.appendChild(tr);
   });
 }
 
@@ -1149,6 +1212,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
