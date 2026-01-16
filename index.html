@@ -1075,22 +1075,6 @@ function renderTop5IndexHariIni(){
     </tr>`;
 }
 
-  rows.forEach(r=>{
-    const tr = document.createElement("tr");
-
-    if(r.avg > 0.35){
-      tr.classList.add("table-index-warning");
-    }
-
-    tr.innerHTML = `
-      <td>${escapeHtml(r.nama)}</td>
-      <td class="text-center">${r.count}</td>
-      <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
 /* ====== DOWNLOAD JPG ====== */
 const downloadBtn = document.getElementById("downloadBtn");
 if (downloadBtn) {
@@ -1271,6 +1255,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
