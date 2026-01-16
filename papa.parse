@@ -353,9 +353,11 @@ document.addEventListener("DOMContentLoaded", ()=> {
   });
 
   updateToggleSiangAvailability();
+  loadTop5FromStorage();
   loadLastUpdate();
   setInterval(loadLastUpdate, 600000);
 });
+
 
 /* ====== UTIL ====== */
 function normKey(s){ return (s||"").toString().toLowerCase().replace(/[^a-z0-9]/g,''); }
@@ -1334,6 +1336,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
