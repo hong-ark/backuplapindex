@@ -510,6 +510,7 @@ async function renderHistoryList(){
   }
 }
 
+/* ====== CSV LOAD ====== */
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
@@ -629,7 +630,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         const statusSlaRaw = getCol(r,['statussla','status sla']);
         const tglDiambilRaw = getCol(r,['tanggaldiambil','tgl diambil','tanggal diambil']);
         const tipeLokasiRaw = getCol(r,['tipelokasiasal','tipe lokasi asal']);
-        const kodeLokasiTujuanRaw = getCol(r,['kodelokasitujuan','kode lokasi tujuan']);
         const umurRaw = getCol(r,['umurkomplain','umur komplain','umur']);
         const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
         return {
@@ -642,7 +642,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
           tipeLokasi: (tipeLokasiRaw||"").trim(),
-          kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
           umurRaw: (umurRaw||"").toString()
         };
       });
@@ -655,32 +654,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
-      // ===== AUTO TOP 5 KHUSUS MODE IDX =====
-if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") {
-
-  if(!sheetData.length) {
-    sheetData = buildUniqueNamesFromCSV(csvData);
-  }
-
-  if(sheetData.length){
-    const results = sheetData.map(k => ({
-      k,
-      res: rataRata_byName(k.nama)
-    }));
-
-    results.sort((a,b)=>{
-      const av = a.res.avg ?? -Infinity;
-      const bv = b.res.avg ?? -Infinity;
-      return bv - av;
-    });
-
-    lastResults = results;
-
-    renderTop5(results);   // 🔥 ISI PANEL KIRI
-  }
-}
-
-
     }});
 });
 
@@ -746,7 +719,6 @@ function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
   for(const r of csvData){
-    if (r.kodeLokasiTujuan !== "RE03") continue;
     if(!isAcceptedStatus(r.statusNorm)) continue;
     if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
@@ -858,10 +830,7 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-
-renderTop5(results);   // 🔥 ISI TOP 5
-renderTable(results);  // tabel utama
-
+  renderTable(results);
 
   const tgl = document.getElementById("tanggalCek").textContent;
   const judul = document.getElementById("judulLaporan");
@@ -936,48 +905,6 @@ function renderTable(results){
   ["Nama","LastCO","IndexCO","TotalCO","SLA","DurasiSLA","InProgress","RelasiResolved"].forEach(k=>{
     const el = document.getElementById(`sort${k}`);
     if(el) el.onclick = () => sortColumn(k);
-  });
-}
-function renderTop5(results){
-  const tbody = document.getElementById("top5Table");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const top5 = results
-    .filter(r => r.res && r.res.avg !== null)
-    .sort((a,b) => {
-      const av = Number.isFinite(Number(a.res.avg)) ? Number(a.res.avg) : -Infinity;
-      const bv = Number.isFinite(Number(b.res.avg)) ? Number(b.res.avg) : -Infinity;
-      return bv - av;
-    })
-    .slice(0,5);
-
-  if(!top5.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>`;
-    return;
-  }
-
-  top5.forEach(item=>{
-    const avgNum = Number(item.res.avg);
-    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
-
-    const tr = document.createElement("tr");
-
-    if ((item.res.slaCount || 0) > 0) {
-      tr.classList.add("table-danger");
-    } else if (avgNum > 0.35) {
-      tr.classList.add("table-index-warning");
-    }
-
-    tr.innerHTML = `
-      <td>${escapeHtml(item.k.nama)}</td>
-      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
-      <td class="text-center fw-bold">${avg}</td>
-    `;
-
-    tbody.appendChild(tr);
   });
 }
 
@@ -1222,9 +1149,6 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
-
-
 
 
 
