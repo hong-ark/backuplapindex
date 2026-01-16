@@ -393,7 +393,10 @@ function loadTop5FromStorage(){
     const parsed = JSON.parse(raw);
     if(!parsed || !Array.isArray(parsed.data)) return false;
 
-    renderTop5(parsed.data);
+    // hanya render jika shift history hari ini ada
+    if(Object.keys(getShiftHistoryToday()).length){
+      renderTop5(parsed.data);
+    }
     return true;
   } catch(e){
     console.warn("Gagal load Top 5 dari storage", e);
@@ -410,6 +413,7 @@ function saveShiftHistoryToday(results, mode){
   } catch {}
 
   results.forEach(r=>{
+    if(mode === "IDX") return;
     const nama = normalizeName(r.k.nama);
     if(!map[nama]) map[nama] = new Set();
     map[nama].add(mode);
@@ -558,7 +562,7 @@ async function renderHistoryList(){
     list.innerHTML = `<div class="text-danger">Gagal memuat history: ${err.message}</div>`;
   }
 }
-saveShiftHistoryToday(results, mode);
+
   function getShiftHistoryToday(){
   const todayKey = new Date().toISOString().slice(0,10);
   const key = `shiftHistory_${todayKey}`;
@@ -917,7 +921,7 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-
+saveShiftHistoryToday(results, mode);
 renderTop5(results);   // 🔥 ISI TOP 5
 renderTable(results);  // tabel utama
 saveTop5ToStorage(results);
@@ -1283,6 +1287,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
