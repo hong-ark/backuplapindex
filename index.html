@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -135,17 +134,15 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     .table-index-warning td { background-color: #ffcc80 !important; color: #000 !important; }
 
     .hdr-arrow { font-weight: 700; margin-left: 6px; font-size: 0.9em; }
-
-    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
+/* ===== FLOATING TOP 5 ===== */
 #top5Floating {
   position: fixed;
-  top: 120px;              /* jarak dari atas (di bawah header) */
-  left: 20px;              /* nempel kiri layar */
+  top: 120px;
+  left: 20px;
   width: 260px;
   z-index: 1000;
 }
 
-/* kecilkan font */
 #top5Floating th {
   font-size: 0.75rem;
 }
@@ -160,6 +157,8 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
   }
 }
 
+    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
+
     @media (max-width: 600px){
       .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
       .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
@@ -168,7 +167,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
 </head>
 
 <body>
-  <!-- ===== FLOATING TOP 5 (OUTSIDE CONTAINER) ===== -->
+  <!-- ===== FLOATING TOP 5 INDEX HARI INI ===== -->
 <div id="top5Floating">
   <div class="card shadow">
     <div class="card-header fw-bold text-center">
@@ -179,11 +178,17 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
         <thead class="table-primary text-center">
           <tr>
             <th>Nama</th>
-            <th>TotalCO</th>
+            <th>Total CO</th>
             <th>Index</th>
           </tr>
         </thead>
-        <tbody id="top5Table"></tbody>
+        <tbody id="top5Table">
+          <tr>
+            <td colspan="3" class="text-center text-muted">
+              Upload CSV untuk melihat Top 5
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -381,27 +386,6 @@ function ambilJamDariTanggal(s){ if(!s) return "-"; const m = s.match(/(\d{1,2})
 function jamMenitDariTanggal(s){ const m = (s||"").match(/(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?/); if(!m) return null; return { h: parseInt(m[1],10), m: parseInt(m[2],10) }; }
 function prettyTanggalLabel(value){ if(typeof value === "string" && value.includes("T")){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} if(typeof value === "number"){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} return String(value||""); }
 function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-ID",{ day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }); }
-function saveShiftHistoryToday(results, mode){
-  if(mode === "IDX") return;
-
-  const key = "shiftHistory_" + new Date().toISOString().slice(0,10);
-  let map = {};
-  try { map = JSON.parse(localStorage.getItem(key)) || {}; } catch {}
-
-  results.forEach(r=>{
-    const nama = normalizeName(r.k.nama);
-    if(!map[nama]) map[nama] = [];
-    if(!map[nama].includes(mode)) map[nama].push(mode);
-  });
-
-  localStorage.setItem(key, JSON.stringify(map));
-}
-
-function getShiftHistoryToday(){
-  const key = "shiftHistory_" + new Date().toISOString().slice(0,10);
-  try { return JSON.parse(localStorage.getItem(key)) || {}; }
-  catch { return {}; }
-}
 
 /* ====== Parse tolerant tanggal+waktu dari CSV ====== */
 function parseDateTime(s){
@@ -517,6 +501,7 @@ async function renderHistoryList(){
           }
         }));
         renderTable(lastResults);
+        renderTop5IndexHariIni();
         const judul = document.getElementById("judulLaporan");
         judul.classList.add("is-history");
         document.getElementById("resultArea").classList.add("is-history");
@@ -531,6 +516,7 @@ async function renderHistoryList(){
   }
 }
 
+/* ====== CSV LOAD ====== */
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
@@ -649,8 +635,8 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         const statusRaw = getCol(r,['statuskomplain','status']);
         const statusSlaRaw = getCol(r,['statussla','status sla']);
         const tglDiambilRaw = getCol(r,['tanggaldiambil','tgl diambil','tanggal diambil']);
-        const tipeLokasiRaw = getCol(r,['tipelokasiasal','tipe lokasi asal']);
         const kodeLokasiTujuanRaw = getCol(r,['kodelokasitujuan','kode lokasi tujuan']);
+        const tipeLokasiRaw = getCol(r,['tipelokasiasal','tipe lokasi asal']);
         const umurRaw = getCol(r,['umurkomplain','umur komplain','umur']);
         const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
         return {
@@ -662,8 +648,8 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusNorm: normalizeStatus(statusRaw),
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
-          tipeLokasi: (tipeLokasiRaw||"").trim(),
           kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
+          tipeLokasi: (tipeLokasiRaw||"").trim(),
           umurRaw: (umurRaw||"").toString()
         };
       });
@@ -676,34 +662,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
-      // ===== AUTO TOP 5 KHUSUS MODE IDX =====
-if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") {
-
-  if(!sheetData.length) {
-    sheetData = buildUniqueNamesFromCSV(csvData);
-  }
-
-  if(sheetData.length){
-    const results = sheetData.map(k => ({
-      k,
-      res: rataRata_byName(k.nama)
-    }));
-
-    results.sort((a,b)=>{
-      const av = a.res.avg ?? -Infinity;
-      const bv = b.res.avg ?? -Infinity;
-      return bv - av;
-    });
-
-    lastResults = results;
-
-saveShiftHistoryToday(results, mode);   // ✅ SIMPAN SHIFT HARIAN
-renderTop5FromHistory();                // ✅ TOP 5 BARU
-renderTable(results);
-  }
-}
-
-
     }});
 });
 
@@ -769,7 +727,6 @@ function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
   for(const r of csvData){
-    if (r.kodeLokasiTujuan !== "RE03") continue;
     if(!isAcceptedStatus(r.statusNorm)) continue;
     if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
@@ -801,6 +758,24 @@ function rataRata_byName(nama,thr=0.85){
     const extracted = candidate.slice(-8).trim();
     chosenDurasiSLA = extracted ? extracted : "0";
   }
+function hitungIndexHarianByNama(nama){
+  const key = normalizeName(nama);
+  const rows = csvData.filter(r =>
+    r.kodeLokasiTujuan === "RE03" &&
+    normalizeName(r.diambilOleh) === key &&
+    isAcceptedStatus(r.statusNorm)
+  );
+
+  if(!rows.length){
+    return { avg: null, count: 0 };
+  }
+
+  const sum = rows.reduce((a,b)=>a+computeC(b),0);
+  return {
+    avg: sum / rows.length,
+    count: rows.length
+  };
+}
 
   // ===== DETEKSI EARLY MORNING (00:00–06:00) PADA TANGGAL HARI INI
   // Important: lakukan pemindaian pada seluruh csvData (bukan matches) sehingga toggle Siang tidak mempengaruhi.
@@ -881,10 +856,8 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-
-renderTop5FromHistory();
-renderTable(results);  // tabel utama
-
+  renderTable(results);
+  renderTop5IndexHariIni();
 
   const tgl = document.getElementById("tanggalCek").textContent;
   const judul = document.getElementById("judulLaporan");
@@ -961,67 +934,6 @@ function renderTable(results){
     if(el) el.onclick = () => sortColumn(k);
   });
 }
-function renderTop5FromHistory(){
-  const tbody = document.getElementById("top5Table");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-
-  if(!csvData.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">
-        Upload CSV untuk melihat Top 5
-      </td></tr>`;
-    return;
-  }
-
-  // 🔥 SEMUA NAMA DARI CSV (BUKAN DARI SHIFT HISTORY)
-  const nameMap = new Map();
-  for(const r of csvData){
-    const nm = (r.diambilOleh||"").trim();
-    if(!nm) continue;
-    const key = normalizeName(nm);
-    if(!nameMap.has(key)) nameMap.set(key, nm);
-  }
-
-   const rows = Array.from(nameMap.values())
-    .map(nama=>{
-      const res = rataRata_byName(nama)
-      if(!res) return null;
-      const key = normalizeName(nama);
-      return {
-        nama,
-        shifts: (shiftMap[key] || []).sort(
-          (a,b)=> ORDER.indexOf(a) - ORDER.indexOf(b)
-        ),
-        res
-      };
-    })
-    .filter(Boolean)
-    .sort((a,b)=> b.res.avg - a.res.avg)
-    .slice(0,5);
-
-  if(!rows.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">Tidak ada index</td></tr>`;
-    return;
-  }
-
-  rows.forEach(r=>{
-    const tr = document.createElement("tr");
-    if(r.res.slaCount > 0){
-      tr.classList.add("table-danger");
-    } else if(r.res.avg > 0.35){
-      tr.classList.add("table-index-warning");
-    }
-
-    tr.innerHTML = `
-      <td>${escapeHtml(r.nama)}</td>
-      <td class="text-center">${escapeHtml((r.shifts||[]).join(","))}</td>
-      <td class="text-center fw-bold">${r.res.avg.toFixed(2)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
 
 /* ====== small helper: escape HTML to avoid injection from CSV data ====== */
 function escapeHtml(s){
@@ -1082,6 +994,63 @@ function sortColumn(key){
   renderTable(lastResults);
 
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
+}
+function renderTop5IndexHariIni(){
+  const tbody = document.getElementById("top5Table");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  if(!csvData.length){
+    tbody.innerHTML = `
+      <tr><td colspan="3" class="text-center text-muted">
+        Upload CSV untuk melihat Top 5
+      </td></tr>`;
+    return;
+  }
+
+  // Ambil nama unik dari CSV
+  const nameMap = new Map();
+  for(const r of csvData){
+    if(r.kodeLokasiTujuan !== "RE03") continue;
+    const nm = (r.diambilOleh||"").trim();
+    if(!nm) continue;
+    const key = normalizeName(nm);
+    if(!nameMap.has(key)) nameMap.set(key, nm);
+  }
+
+  const rows = Array.from(nameMap.values())
+    .map(nama=>{
+      const res = hitungIndexHarianByNama(nama);
+      if(!res.count || res.avg === null) return null;
+      return { nama, ...res };
+    })
+    .filter(Boolean)
+    .sort((a,b)=> b.avg - a.avg)
+    .slice(0,5);
+
+  if(!rows.length){
+    tbody.innerHTML = `
+      <tr><td colspan="3" class="text-center text-muted">
+        Tidak ada data RE03
+      </td></tr>`;
+    return;
+  }
+
+  rows.forEach(r=>{
+    const tr = document.createElement("tr");
+
+    if(r.avg > 0.35){
+      tr.classList.add("table-index-warning");
+    }
+
+    tr.innerHTML = `
+      <td>${escapeHtml(r.nama)}</td>
+      <td class="text-center">${r.count}</td>
+      <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 /* ====== DOWNLOAD JPG ====== */
@@ -1264,12 +1233,6 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
-
-
-
-
-
 
 
 
