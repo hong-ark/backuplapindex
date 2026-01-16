@@ -400,6 +400,29 @@ function loadTop5FromStorage(){
     return false;
   }
 }
+function saveShiftHistoryToday(results, mode){
+  const todayKey = new Date().toISOString().slice(0,10);
+  const key = `shiftHistory_${todayKey}`;
+
+  let map = {};
+  try {
+    map = JSON.parse(localStorage.getItem(key)) || {};
+  } catch {}
+
+  results.forEach(r=>{
+    const nama = normalizeName(r.k.nama);
+    if(!map[nama]) map[nama] = new Set();
+    map[nama].add(mode);
+  });
+
+  // convert Set → Array before save
+  const saveObj = {};
+  Object.keys(map).forEach(k=>{
+    saveObj[k] = Array.from(map[k]);
+  });
+
+  localStorage.setItem(key, JSON.stringify(saveObj));
+}
 
 function normalizeStatus(s){ if(!s) return ""; return String(s).replace(/\u00A0/g,' ').replace(/[_\-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
 function isAcceptedStatus(norm){ return norm.includes("resolved")||norm.includes("closed")||norm.includes("inprogress")||norm.includes("in progress")||norm.includes("pending"); }
@@ -533,6 +556,16 @@ async function renderHistoryList(){
     });
   }catch(err){
     list.innerHTML = `<div class="text-danger">Gagal memuat history: ${err.message}</div>`;
+  }
+}
+saveShiftHistoryToday(results, mode);
+  function getShiftHistoryToday(){
+  const todayKey = new Date().toISOString().slice(0,10);
+  const key = `shiftHistory_${todayKey}`;
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
   }
 }
 
@@ -971,13 +1004,11 @@ function renderTop5(results){
 
   tbody.innerHTML = "";
 
+  const shiftMap = getShiftHistoryToday();
+
   const top5 = results
     .filter(r => r.res && r.res.avg !== null)
-    .sort((a,b) => {
-      const av = Number.isFinite(Number(a.res.avg)) ? Number(a.res.avg) : -Infinity;
-      const bv = Number.isFinite(Number(b.res.avg)) ? Number(b.res.avg) : -Infinity;
-      return bv - av;
-    })
+    .sort((a,b)=> Number(b.res.avg) - Number(a.res.avg))
     .slice(0,5);
 
   if(!top5.length){
@@ -990,6 +1021,9 @@ function renderTop5(results){
     const avgNum = Number(item.res.avg);
     const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
 
+    const namaKey = normalizeName(item.k.nama);
+    const shifts = shiftMap[namaKey]?.join(",") || "-";
+
     const tr = document.createElement("tr");
 
     if ((item.res.slaCount || 0) > 0) {
@@ -1000,10 +1034,9 @@ function renderTop5(results){
 
     tr.innerHTML = `
       <td>${escapeHtml(item.k.nama)}</td>
-      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
+      <td class="text-center">${escapeHtml(shifts)}</td>
       <td class="text-center fw-bold">${avg}</td>
     `;
-
     tbody.appendChild(tr);
   });
 }
@@ -1250,6 +1283,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
