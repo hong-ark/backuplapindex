@@ -438,11 +438,19 @@ function parseDateTime(s){
 function detectShiftFromTime(tanggal){
   const d = parseDateTime(tanggal);
   if(!d) return "";
+
   const h = d.getHours();
-  if(h >= 7 && h < 15) return "P";
-  if(h >= 15 && h < 23) return "S";
-  return "M";
+  const m = d.getMinutes();
+  const jam = h + m / 60;
+
+  if (jam >= 22 || jam < 7) return "M";
+  if (jam >= 14 && jam < 23) return "S";
+  if (jam >= 7 && jam < 16) return "P1";
+  if (jam >= 6 && jam < 15) return "P";
+
+  return "";
 }
+
 /* ====== FILTER SIANG >=13:00 (toggle) ====== */
 function lolosFilterShiftSiangByTanggalDiambil(record){
   const shift = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -705,11 +713,7 @@ renderTop5(harianResults);
 saveTop5ToStorage(harianResults);
 
 
-    results.sort((a,b)=>{
-      const av = a.res.avg ?? -Infinity;
-      const bv = b.res.avg ?? -Infinity;
-      return bv - av;
-    });
+    
 
     lastResults = results;
 
@@ -1334,6 +1338,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
