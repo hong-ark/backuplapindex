@@ -340,6 +340,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx4dWdi4tSGqHN3WQ89Za1wyklGj1eLfcNPwqBeLa15aLUKrzjncKvySo07-9GuqxPD0g/exec";
 const HISTORY_GAS_URL = "https://script.google.com/macros/s/AKfycbwrXZlIB4nyiQtb-MM79c8rm1rDuoVyEZRxdk4-yTHaM_teOWR-XxC_BK50RsVlmo-P/exec";
 const DATA_GAS_URL = "https://script.google.com/macros/s/AKfycbxTsw4JoQfyVcS9JE3e33VayBckQ8IIztoAEoHq9XhvEkcUz90f70IEGXxsdB2mSjlgdg/exec"; // SHEET = DATA
+const TOP5_STORAGE_KEY = "top5IndexHariIni";
 
 
 let sheetData = [], csvData = [], lastResults = [];
@@ -386,6 +387,30 @@ function ambilJamDariTanggal(s){ if(!s) return "-"; const m = s.match(/(\d{1,2})
 function jamMenitDariTanggal(s){ const m = (s||"").match(/(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?/); if(!m) return null; return { h: parseInt(m[1],10), m: parseInt(m[2],10) }; }
 function prettyTanggalLabel(value){ if(typeof value === "string" && value.includes("T")){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} if(typeof value === "number"){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} return String(value||""); }
 function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-ID",{ day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }); }
+function saveTop5ToStorage(rows){
+  try {
+    const payload = {
+      ts: Date.now(),
+      data: rows
+    };
+    localStorage.setItem(TOP5_STORAGE_KEY, JSON.stringify(payload));
+  } catch(e){
+    console.warn("Gagal simpan Top 5:", e);
+  }
+}
+
+function loadTop5FromStorage(){
+  try {
+    const raw = localStorage.getItem(TOP5_STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.data)) return null;
+    return parsed;
+  } catch(e){
+    console.warn("Gagal load Top 5:", e);
+    return null;
+  }
+}
 
 /* ====== Parse tolerant tanggal+waktu dari CSV ====== */
 function parseDateTime(s){
@@ -1004,41 +1029,50 @@ function renderTop5IndexHariIni(){
 
   tbody.innerHTML = "";
 
-  if(!csvData.length){
-    tbody.innerHTML = `
-      <tr><td colspan="3" class="text-center text-muted">
+  // ===== JIKA CSV ADA → HITUNG ULANG & SIMPAN =====
+  if(csvData.length){
+    const nameMap = new Map();
+
+    for(const r of csvData){
+      if(r.kodeLokasiTujuan !== "RE03") continue;
+      const nm = (r.diambilOleh||"").trim();
+      if(!nm) continue;
+      const key = normalizeName(nm);
+      if(!nameMap.has(key)) nameMap.set(key, nm);
+    }
+
+    const rows = Array.from(nameMap.values())
+      .map(nama=>{
+        const res = hitungIndexHarianByNama(nama);
+        if(!res.count || res.avg === null) return null;
+        return { nama, count: res.count, avg: res.avg };
+      })
+      .filter(Boolean)
+      .sort((a,b)=> b.avg - a.avg)
+      .slice(0,5);
+
+    if(rows.length){
+      saveTop5ToStorage(rows);
+      renderTop5Rows(rows, tbody);
+      return;
+    }
+  }
+
+  // ===== FALLBACK: LOAD DARI LOCALSTORAGE =====
+  const saved = loadTop5FromStorage();
+  if(saved && saved.data.length){
+    renderTop5Rows(saved.data, tbody, saved.ts);
+    return;
+  }
+
+  // ===== TIDAK ADA APA-APA =====
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center text-muted">
         Upload CSV untuk melihat Top 5
-      </td></tr>`;
-    return;
-  }
-
-  // Ambil nama unik dari CSV
-  const nameMap = new Map();
-  for(const r of csvData){
-    if(r.kodeLokasiTujuan !== "RE03") continue;
-    const nm = (r.diambilOleh||"").trim();
-    if(!nm) continue;
-    const key = normalizeName(nm);
-    if(!nameMap.has(key)) nameMap.set(key, nm);
-  }
-
-  const rows = Array.from(nameMap.values())
-    .map(nama=>{
-      const res = hitungIndexHarianByNama(nama);
-      if(!res.count || res.avg === null) return null;
-      return { nama, ...res };
-    })
-    .filter(Boolean)
-    .sort((a,b)=> b.avg - a.avg)
-    .slice(0,5);
-
-  if(!rows.length){
-    tbody.innerHTML = `
-      <tr><td colspan="3" class="text-center text-muted">
-        Tidak ada data RE03
-      </td></tr>`;
-    return;
-  }
+      </td>
+    </tr>`;
+}
 
   rows.forEach(r=>{
     const tr = document.createElement("tr");
@@ -1236,6 +1270,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
