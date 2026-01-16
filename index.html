@@ -767,6 +767,7 @@ function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik
    Jika tidak ada nilai, durasiSLA akan menjadi "0"
    Perubahan: earlyMorning deteksi dilakukan DENGAN MEMINDAI csvData (tidak bergantung pada filter siang),
    sehingga bold tetap aktif meskipun toggle Siang >=13:00 dicentang.
+   
 */
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
@@ -843,6 +844,53 @@ function rataRata_byName(nama,thr=0.85){
     earlyMorning: earlyMorningFlag
   };
 }
+function hitungIndexHarian(){
+  // Ambil SEMUA nama unik dari CSV
+  const namaMap = new Map();
+
+  csvData.forEach(r => {
+    if(!r.diambilOleh) return;
+    const key = normalizeName(r.diambilOleh);
+    if(!namaMap.has(key)){
+      namaMap.set(key, r.diambilOleh.trim());
+    }
+  });
+
+  const results = [];
+
+  namaMap.forEach((nama) => {
+    // 🔥 Paksa hitung TANPA shift & TANPA filter siang
+    const matches = csvData.filter(r => {
+      if(!isAcceptedStatus(r.statusNorm)) return false;
+      if(r.tipeLokasi && r.tipeLokasi.toLowerCase() === "branch") return false;
+
+      // 🔥 FILTER WAJIB RE03
+      if((r.kodeLokasiTujuan || "").toUpperCase() !== "RE03") return false;
+
+      return normalizeName(r.diambilOleh) === normalizeName(nama);
+    });
+
+    if(!matches.length) return;
+
+    const sum = matches.reduce((a,b)=>a+computeC(b),0);
+    const avg = sum / matches.length;
+
+    results.push({
+      k: { nama, shift: "ALL" },
+      res: {
+        avg,
+        count: matches.length,
+        slaCount: matches.filter(r =>
+          (r.statusSLA || "").toLowerCase().includes("lewat")
+        ).length
+      }
+    });
+  });
+
+  return results
+    .filter(r => r.res.avg !== null)
+    .sort((a,b)=> b.res.avg - a.res.avg);
+}
 
 /* levenshtein + similarity */
 function levenshtein(a,b){ a=a||""; b=b||""; const al=a.length, bl=b.length; if(!al) return bl; if(!bl) return al;
@@ -885,9 +933,10 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
 
   lastResults = results;
 
-renderTop5(results);   // 🔥 ISI TOP 5
-renderTable(results);  // tabel utama
-saveTop5ToStorage(results);
+const harianResults = hitungIndexHarian();
+
+renderTop5(harianResults);
+saveTop5ToStorage(harianResults);
 
 
   const tgl = document.getElementById("tanggalCek").textContent;
@@ -1250,6 +1299,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
