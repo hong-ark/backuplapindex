@@ -629,6 +629,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         const statusSlaRaw = getCol(r,['statussla','status sla']);
         const tglDiambilRaw = getCol(r,['tanggaldiambil','tgl diambil','tanggal diambil']);
         const tipeLokasiRaw = getCol(r,['tipelokasiasal','tipe lokasi asal']);
+        const kodeLokasiTujuanRaw = getCol(r,['kodelokasitujuan','kode lokasi tujuan']);
         const umurRaw = getCol(r,['umurkomplain','umur komplain','umur']);
         const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
         return {
@@ -641,6 +642,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
           tipeLokasi: (tipeLokasiRaw||"").trim(),
+          kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
           umurRaw: (umurRaw||"").toString()
         };
       });
@@ -744,6 +746,7 @@ function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
   for(const r of csvData){
+    if (r.kodeLokasiTujuan !== "RE03") continue;
     if(!isAcceptedStatus(r.statusNorm)) continue;
     if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
@@ -1219,6 +1222,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
