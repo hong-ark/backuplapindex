@@ -412,7 +412,17 @@ function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-I
 function parseDateTime(s){
   if(!s) return null;
   const d1 = new Date(s);
-  if(!isNaN(d1)) return d1;
+  if(!isNaN(d1)) return d1
+    
+function detectShiftFromTime(tanggal){
+  const d = parseDateTime(tanggal);
+  if(!d) return "";
+  const h = d.getHours();
+
+  if(h >= 7 && h < 15) return "P";   // pagi
+  if(h >= 15 && h < 23) return "S";  // siang
+  return "M";                        // malam
+}
 
   const str = s.toString().trim();
   // dd/mm/yyyy or dd-mm-yyyy [ hh:mm]
@@ -667,6 +677,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusNorm: normalizeStatus(statusRaw),
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
+          shift: detectShiftFromTime(tglDiambilRaw),
           tipeLokasi: (tipeLokasiRaw||"").trim(),
           kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
           umurRaw: (umurRaw||"").toString()
@@ -875,16 +886,37 @@ function hitungIndexHarian(){
     const sum = matches.reduce((a,b)=>a+computeC(b),0);
     const avg = sum / matches.length;
 
-    results.push({
-      k: { nama, shift: "ALL" },
-      res: {
-        avg,
-        count: matches.length,
-        slaCount: matches.filter(r =>
-          (r.statusSLA || "").toLowerCase().includes("lewat")
-        ).length
-      }
-    });
+   // hitung shift dominan
+const shiftCount = { P:0, P1:0, S:0, M:0 };
+
+matches.forEach(r => {
+  const s = (r.shift || "").toUpperCase();
+  if (shiftCount[s] !== undefined) {
+    shiftCount[s]++;
+  }
+});
+
+// ambil shift dengan jumlah terbanyak
+let dominantShift = "-";
+let max = 0;
+for (const s in shiftCount) {
+  if (shiftCount[s] > max) {
+    max = shiftCount[s];
+    dominantShift = s;
+  }
+}
+
+results.push({
+  k: { nama, shift: dominantShift },
+  res: {
+    avg,
+    count: matches.length,
+    slaCount: matches.filter(r =>
+      (r.statusSLA || "").toLowerCase().includes("lewat")
+    ).length
+  }
+});
+
   });
 
   return results
@@ -1299,6 +1331,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
