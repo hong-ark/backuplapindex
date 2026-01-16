@@ -662,6 +662,12 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         const kodeLokasiTujuanRaw = getCol(r,['kodelokasitujuan','kode lokasi tujuan']);
         const umurRaw = getCol(r,['umurkomplain','umur komplain','umur']);
         const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
+        console.log(
+  tglDiambilRaw,
+  parseDateTime(tglDiambilRaw)?.getHours(),
+  detectShiftFromTime(tglDiambilRaw)
+);
+
         return {
           diambilOleh,
           durasiRaw,
@@ -1328,6 +1334,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
