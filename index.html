@@ -974,28 +974,34 @@ function renderTop5FromHistory(){
     return;
   }
 
-  const shiftMap = getShiftHistoryToday();
-  const names = Object.keys(shiftMap);
-  if(!names.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">
-        Belum ada history hari ini
-      </td></tr>`;
-    return;
+  // 🔥 SEMUA NAMA DARI CSV (BUKAN DARI SHIFT HISTORY)
+  const nameMap = new Map();
+  for(const r of csvData){
+    const nm = (r.diambilOleh||"").trim();
+    if(!nm) continue;
+    const key = normalizeName(nm);
+    if(!nameMap.has(key)) nameMap.set(key, nm);
   }
 
+  const shiftMap = getShiftHistoryToday();
   const ORDER = ["P","P1","S","M","MH1"];
 
-  const rows = names.map(nama => ({
-    nama,
-    shifts: (shiftMap[nama] || []).sort(
-      (a,b)=> ORDER.indexOf(a) - ORDER.indexOf(b)
-    ),
-    res: rataRata_byName(nama)
-  }))
-  .filter(r => r.res.avg !== null)
-  .sort((a,b)=> b.res.avg - a.res.avg)
-  .slice(0,5);
+  const rows = Array.from(nameMap.values())
+    .map(nama=>{
+      const res = rataRataHarian_byName(nama);
+      if(!res) return null;
+      const key = normalizeName(nama);
+      return {
+        nama,
+        shifts: (shiftMap[key] || []).sort(
+          (a,b)=> ORDER.indexOf(a) - ORDER.indexOf(b)
+        ),
+        res
+      };
+    })
+    .filter(Boolean)
+    .sort((a,b)=> b.res.avg - a.res.avg)
+    .slice(0,5);
 
   if(!rows.length){
     tbody.innerHTML =
@@ -1004,10 +1010,8 @@ function renderTop5FromHistory(){
   }
 
   rows.forEach(r=>{
-    const avg = r.res.avg.toFixed(2);
     const tr = document.createElement("tr");
-
-    if((r.res.slaCount || 0) > 0){
+    if(r.res.slaCount > 0){
       tr.classList.add("table-danger");
     } else if(r.res.avg > 0.35){
       tr.classList.add("table-index-warning");
@@ -1015,8 +1019,8 @@ function renderTop5FromHistory(){
 
     tr.innerHTML = `
       <td>${escapeHtml(r.nama)}</td>
-      <td class="text-center">${escapeHtml(r.shifts.join(","))}</td>
-      <td class="text-center fw-bold">${avg}</td>
+      <td class="text-center">${escapeHtml((r.shifts||[]).join(","))}</td>
+      <td class="text-center fw-bold">${r.res.avg.toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1263,6 +1267,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
