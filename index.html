@@ -385,24 +385,6 @@ function saveTop5ToStorage(results){
     console.warn("Gagal simpan Top 5 ke storage", e);
   }
 }
-function loadTop5FromStorage(){
-  try {
-    const raw = localStorage.getItem("lastTop5IDX");
-    if(!raw) return false;
-
-    const parsed = JSON.parse(raw);
-    if(!parsed || !Array.isArray(parsed.data)) return false;
-
-    // hanya render jika shift history hari ini ada
-    if(Object.keys(getShiftHistoryToday()).length){
-      renderTop5(parsed.data);
-    }
-    return true;
-  } catch(e){
-    console.warn("Gagal load Top 5 dari storage", e);
-    return false;
-  }
-}
 function saveShiftHistoryToday(results, mode){
   const todayKey = new Date().toISOString().slice(0,10);
   const key = `shiftHistory_${todayKey}`;
@@ -739,7 +721,7 @@ if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") 
 
     lastResults = results;
 
-    renderTop5(results);   // 🔥 ISI PANEL KIRI
+    renderTop5FromHistory();
   }
 }
 
@@ -1002,43 +984,59 @@ function renderTable(results){
     if(el) el.onclick = () => sortColumn(k);
   });
 }
-function renderTop5(results){
+function renderTop5FromHistory(){
   const tbody = document.getElementById("top5Table");
   if(!tbody) return;
-
   tbody.innerHTML = "";
 
-  const shiftMap = getShiftHistoryToday();
-
-  const top5 = results
-    .filter(r => r.res && r.res.avg !== null)
-    .sort((a,b)=> Number(b.res.avg) - Number(a.res.avg))
-    .slice(0,5);
-
-  if(!top5.length){
+  if(!csvData.length){
     tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>`;
+      `<tr><td colspan="3" class="text-center text-muted">
+        Upload CSV untuk melihat Top 5
+      </td></tr>`;
     return;
   }
 
-  top5.forEach(item=>{
-    const avgNum = Number(item.res.avg);
-    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
+  const shiftMap = getShiftHistoryToday();
+  const names = Object.keys(shiftMap);
+  if(!names.length){
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="text-center text-muted">
+        Belum ada history hari ini
+      </td></tr>`;
+    return;
+  }
 
-    const namaKey = normalizeName(item.k.nama);
-    const shifts = shiftMap[namaKey]?.join(",") || "-";
+  const results = names.map(nama => ({
+    nama,
+    shifts: shiftMap[nama],
+    res: rataRata_byName(nama)
+  }))
+  .filter(r => r.res.avg !== null)
+  .sort((a,b)=> b.res.avg - a.res.avg)
+  .slice(0,5);
 
+  if(!results.length){
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="text-center text-muted">
+        Tidak ada index
+      </td></tr>`;
+    return;
+  }
+
+  results.forEach(r=>{
+    const avg = r.res.avg.toFixed(2);
     const tr = document.createElement("tr");
 
-    if ((item.res.slaCount || 0) > 0) {
+    if(r.res.slaCount > 0){
       tr.classList.add("table-danger");
-    } else if (avgNum > 0.35) {
+    } else if(r.res.avg > 0.35){
       tr.classList.add("table-index-warning");
     }
 
     tr.innerHTML = `
-      <td>${escapeHtml(item.k.nama)}</td>
-      <td class="text-center">${escapeHtml(shifts)}</td>
+      <td>${escapeHtml(r.nama)}</td>
+      <td class="text-center">${r.shifts.join(",")}</td>
       <td class="text-center fw-bold">${avg}</td>
     `;
     tbody.appendChild(tr);
@@ -1252,7 +1250,6 @@ document.addEventListener("DOMContentLoaded", ()=> {
   });
 
   updateToggleSiangAvailability();
-  loadTop5FromStorage();
   loadLastUpdate();
   setInterval(loadLastUpdate, 600000); // refresh tiap 10 menit
 });
@@ -1287,6 +1284,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
