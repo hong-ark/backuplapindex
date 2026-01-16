@@ -405,15 +405,6 @@ function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-I
 /* ====== Parse tolerant tanggal+waktu dari CSV ====== */
 function parseDateTime(s){
   if(!s) return null;
-  function detectShiftFromTime(tanggal){
-  const d = parseDateTime(tanggal);
-  if(!d) return "";
-  const h = d.getHours();
-
-  if(h >= 7 && h < 15) return "P";   // pagi
-  if(h >= 15 && h < 23) return "S";  // siang
-  return "M";                        // malam
-}
   const d1 = new Date(s);
   if(!isNaN(d1)) return d1
   const str = s.toString().trim();
@@ -443,7 +434,15 @@ function parseDateTime(s){
 
   return null;
 }
-
+// ✅ HARUS GLOBAL
+function detectShiftFromTime(tanggal){
+  const d = parseDateTime(tanggal);
+  if(!d) return "";
+  const h = d.getHours();
+  if(h >= 7 && h < 15) return "P";
+  if(h >= 15 && h < 23) return "S";
+  return "M";
+}
 /* ====== FILTER SIANG >=13:00 (toggle) ====== */
 function lolosFilterShiftSiangByTanggalDiambil(record){
   const shift = document.getElementById("shiftInput").value.trim().toUpperCase();
@@ -637,7 +636,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
   const file = e.target.files[0]; if(!file) return;
   Papa.parse(file,{header:true,delimiter:";",skipEmptyLines:true,
     complete:(res)=>{
-      const headerMap={}; (res.meta.fields||[]).forEach(f=>headerMap[normKey(f)]=f);
+     const headerMap={}; (res.meta.fields||[]).forEach(f=>headerMap[normKey(f)]=f);
       const getCol = (row,arr)=>{
         for(const c of arr){
           for(const key in headerMap){
@@ -645,9 +644,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
               const realKey=headerMap[key];
               if(row[realKey]) return row[realKey].toString();
               // 🔥 pastikan tombol Hitung Index aktif jika CSV & jadwal sudah ada
-if (csvData.length && sheetData.length) {
-  document.getElementById("generateBtn").disabled = false;
-}
+
 
             }
           }
@@ -697,10 +694,10 @@ if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") 
   }
 
   if(sheetData.length){
-    const results = sheetData.map(k => ({
-      k,
-      res: rataRata_byName(k.nama)
-    }));
+    const harianResults = hitungIndexHarian();
+renderTop5(harianResults);
+saveTop5ToStorage(harianResults);
+
 
     results.sort((a,b)=>{
       const av = a.res.avg ?? -Infinity;
@@ -710,7 +707,7 @@ if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") 
 
     lastResults = results;
 
-    renderTop5(results);   // 🔥 ISI PANEL KIRI
+   
   }
 }
 
@@ -933,7 +930,10 @@ function similarity(a,b){ a=normalizeName(a); b=normalizeName(b); if(!a||!b) ret
 /* ====== HITUNG & RENDER TABEL (Generate Button) ====== */
 document.getElementById("generateBtn").addEventListener("click", async ()=>{
   const mode = document.getElementById("shiftInput").value.trim().toUpperCase();
-  if(!csvData.length) return alert("Upload CSV dulu!");
+  if(!Array.isArray(csvData) || csvData.length === 0){
+  alert("Upload CSV dulu!");
+  return;
+}
   if(mode==="IDX"){
     if(!sheetData.length) sheetData = buildUniqueNamesFromCSV(csvData);
     if(!sheetData.length){ alert('Tidak ada nama pada kolom "Diambil oleh" di CSV.'); return; }
@@ -1328,6 +1328,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
