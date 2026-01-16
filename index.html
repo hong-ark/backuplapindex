@@ -375,6 +375,32 @@ function durasiKeDetik(v){
   if(m2) return (+m2[1])*3600 + (+m2[2])*60 + (+m2[3]);
   return 0;
 }
+function saveTop5ToStorage(results){
+  try {
+    localStorage.setItem("lastTop5IDX", JSON.stringify({
+      ts: Date.now(),
+      data: results.slice(0, 5)
+    }));
+  } catch(e){
+    console.warn("Gagal simpan Top 5 ke storage", e);
+  }
+}
+function loadTop5FromStorage(){
+  try {
+    const raw = localStorage.getItem("lastTop5IDX");
+    if(!raw) return false;
+
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.data)) return false;
+
+    renderTop5(parsed.data);
+    return true;
+  } catch(e){
+    console.warn("Gagal load Top 5 dari storage", e);
+    return false;
+  }
+}
+
 function normalizeStatus(s){ if(!s) return ""; return String(s).replace(/\u00A0/g,' ').replace(/[_\-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
 function isAcceptedStatus(norm){ return norm.includes("resolved")||norm.includes("closed")||norm.includes("inprogress")||norm.includes("in progress")||norm.includes("pending"); }
 function ambilJamDariTanggal(s){ if(!s) return "-"; const m = s.match(/(\d{1,2}):(\d{2})/); return m?`${m[1].padStart(2,'0')}:${m[2]}`:"-"; }
@@ -1184,10 +1210,11 @@ document.getElementById("shiftInput").addEventListener("change", ()=>{
 document.addEventListener("DOMContentLoaded", ()=> {
   document.querySelectorAll('#resultTable thead th[id]').forEach(th=>{
     originalHeaderText[th.id] = th.innerHTML;
+    
   });
 
   updateToggleSiangAvailability();
-
+  loadTop5FromStorage();
   loadLastUpdate();
   setInterval(loadLastUpdate, 600000); // refresh tiap 10 menit
 });
@@ -1222,6 +1249,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
