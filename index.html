@@ -179,7 +179,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
         <thead class="table-primary text-center">
           <tr>
             <th>Nama</th>
-            <th>Shift</th>
+            <th>TotalCO</th>
             <th>Index</th>
           </tr>
         </thead>
@@ -983,12 +983,9 @@ function renderTop5FromHistory(){
     if(!nameMap.has(key)) nameMap.set(key, nm);
   }
 
-  const shiftMap = getShiftHistoryToday();
-  const ORDER = ["P","P1","S","M","MH1"];
-
-  const rows = Array.from(nameMap.values())
+   const rows = Array.from(nameMap.values())
     .map(nama=>{
-      const res = rataRataHarian_byName(nama);
+      const res = rataRata_byName(nama)
       if(!res) return null;
       const key = normalizeName(nama);
       return {
@@ -1267,6 +1264,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
