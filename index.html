@@ -904,7 +904,7 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
 
   lastResults = results;
 saveShiftHistoryToday(results, mode);
-renderTop5(results);   // 🔥 ISI TOP 5
+renderTop5FromHistory();
 renderTable(results);  // tabel utama
 saveTop5ToStorage(results);
 
@@ -1284,6 +1284,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
