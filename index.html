@@ -661,6 +661,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         document.getElementById("modeNote").textContent = sheetData.length ? " " : "(Mode Index) Tidak ada nama pada kolom 'Diambil oleh'.";
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
+      renderTop5IndexHariIni();
       kirimCsvKeGoogleSheetDATA(res.data);
     }});
 });
@@ -758,24 +759,7 @@ function rataRata_byName(nama,thr=0.85){
     const extracted = candidate.slice(-8).trim();
     chosenDurasiSLA = extracted ? extracted : "0";
   }
-function hitungIndexHarianByNama(nama){
-  const key = normalizeName(nama);
-  const rows = csvData.filter(r =>
-    r.kodeLokasiTujuan === "RE03" &&
-    normalizeName(r.diambilOleh) === key &&
-    isAcceptedStatus(r.statusNorm)
-  );
 
-  if(!rows.length){
-    return { avg: null, count: 0 };
-  }
-
-  const sum = rows.reduce((a,b)=>a+computeC(b),0);
-  return {
-    avg: sum / rows.length,
-    count: rows.length
-  };
-}
 
   // ===== DETEKSI EARLY MORNING (00:00–06:00) PADA TANGGAL HARI INI
   // Important: lakukan pemindaian pada seluruh csvData (bukan matches) sehingga toggle Siang tidak mempengaruhi.
@@ -994,6 +978,25 @@ function sortColumn(key){
   renderTable(lastResults);
 
   setHeaderArrow(`sort${key}`, asc ? "↑" : "↓");
+}
+  function hitungIndexHarianByNama(nama){
+  const key = normalizeName(nama);
+
+  const rows = csvData.filter(r =>
+    r.kodeLokasiTujuan === "RE03" &&
+    normalizeName(r.diambilOleh) === key &&
+    isAcceptedStatus(r.statusNorm)
+  );
+
+  if(!rows.length){
+    return { avg: null, count: 0 };
+  }
+
+  const sum = rows.reduce((a,b)=>a+computeC(b),0);
+  return {
+    avg: sum / rows.length,
+    count: rows.length
+  };
 }
 function renderTop5IndexHariIni(){
   const tbody = document.getElementById("top5Table");
@@ -1233,6 +1236,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
