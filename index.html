@@ -412,17 +412,7 @@ function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-I
 function parseDateTime(s){
   if(!s) return null;
   const d1 = new Date(s);
-  if(!isNaN(d1)) return d1
-    
-function detectShiftFromTime(tanggal){
-  const d = parseDateTime(tanggal);
-  if(!d) return "";
-  const h = d.getHours();
-
-  if(h >= 7 && h < 15) return "P";   // pagi
-  if(h >= 15 && h < 23) return "S";  // siang
-  return "M";                        // malam
-}
+  if(!isNaN(d1)) return d1;
 
   const str = s.toString().trim();
   // dd/mm/yyyy or dd-mm-yyyy [ hh:mm]
@@ -677,7 +667,6 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusNorm: normalizeStatus(statusRaw),
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
-          shift: detectShiftFromTime(tglDiambilRaw),
           tipeLokasi: (tipeLokasiRaw||"").trim(),
           kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
           umurRaw: (umurRaw||"").toString()
@@ -778,7 +767,6 @@ function computeC(r){ return r.waktuSlaDetik>0 ? r.durasiDetik / r.waktuSlaDetik
    Jika tidak ada nilai, durasiSLA akan menjadi "0"
    Perubahan: earlyMorning deteksi dilakukan DENGAN MEMINDAI csvData (tidak bergantung pada filter siang),
    sehingga bold tetap aktif meskipun toggle Siang >=13:00 dicentang.
-   
 */
 function rataRata_byName(nama,thr=0.85){
   const matches=[];
@@ -855,74 +843,6 @@ function rataRata_byName(nama,thr=0.85){
     earlyMorning: earlyMorningFlag
   };
 }
-function hitungIndexHarian(){
-  // Ambil SEMUA nama unik dari CSV
-  const namaMap = new Map();
-
-  csvData.forEach(r => {
-    if(!r.diambilOleh) return;
-    const key = normalizeName(r.diambilOleh);
-    if(!namaMap.has(key)){
-      namaMap.set(key, r.diambilOleh.trim());
-    }
-  });
-
-  const results = [];
-
-  namaMap.forEach((nama) => {
-    // 🔥 Paksa hitung TANPA shift & TANPA filter siang
-    const matches = csvData.filter(r => {
-      if(!isAcceptedStatus(r.statusNorm)) return false;
-      if(r.tipeLokasi && r.tipeLokasi.toLowerCase() === "branch") return false;
-
-      // 🔥 FILTER WAJIB RE03
-      if((r.kodeLokasiTujuan || "").toUpperCase() !== "RE03") return false;
-
-      return normalizeName(r.diambilOleh) === normalizeName(nama);
-    });
-
-    if(!matches.length) return;
-
-    const sum = matches.reduce((a,b)=>a+computeC(b),0);
-    const avg = sum / matches.length;
-
-   // hitung shift dominan
-const shiftCount = { P:0, P1:0, S:0, M:0 };
-
-matches.forEach(r => {
-  const s = (r.shift || "").toUpperCase();
-  if (shiftCount[s] !== undefined) {
-    shiftCount[s]++;
-  }
-});
-
-// ambil shift dengan jumlah terbanyak
-let dominantShift = "-";
-let max = 0;
-for (const s in shiftCount) {
-  if (shiftCount[s] > max) {
-    max = shiftCount[s];
-    dominantShift = s;
-  }
-}
-
-results.push({
-  k: { nama, shift: dominantShift },
-  res: {
-    avg,
-    count: matches.length,
-    slaCount: matches.filter(r =>
-      (r.statusSLA || "").toLowerCase().includes("lewat")
-    ).length
-  }
-});
-
-  });
-
-  return results
-    .filter(r => r.res.avg !== null)
-    .sort((a,b)=> b.res.avg - a.res.avg);
-}
 
 /* levenshtein + similarity */
 function levenshtein(a,b){ a=a||""; b=b||""; const al=a.length, bl=b.length; if(!al) return bl; if(!bl) return al;
@@ -964,11 +884,10 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-renderTable(results); 
-const harianResults = hitungIndexHarian();
 
-renderTop5(harianResults);
-saveTop5ToStorage(harianResults);
+renderTop5(results);   // 🔥 ISI TOP 5
+renderTable(results);  // tabel utama
+saveTop5ToStorage(results);
 
 
   const tgl = document.getElementById("tanggalCek").textContent;
@@ -1331,9 +1250,6 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
-
-
 
 
 
