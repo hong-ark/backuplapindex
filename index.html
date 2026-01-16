@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -116,8 +117,58 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     .marquee .item { display:inline-block; padding-right: 60px; }
     .marquee-wrap:hover .marquee { animation-play-state: paused; }
     @keyframes marqueeScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    
-    <!-- ===== FLOATING TOP 5 ===== -->
+    /* ===== END MARQUEE ===== */
+
+    .content-area { padding:20px 25px; }
+    #judulLaporan { font-weight: 700; font-size: 18px; text-align: center; margin-bottom: 8px; color:#000; }
+    #resultTable td { text-align: center; vertical-align: middle; font-size: 0.95rem; }
+
+    #resultTable.table thead tr th {
+      background-color: #1976d2 !important; color: #fff !important; text-align: center !important;
+      font-weight: 700; cursor: pointer; padding: 10px; user-select: none; vertical-align: middle;
+      border-color: #1565c0 !important;
+    }
+    #resultTable.table thead tr th:hover { background-color: #1565c0 !important; }
+    #resultArea.is-history thead tr th { background-color: #9e9e9e !important; border-color: #757575 !important; color: #fff !important; }
+
+    .table-danger td { background-color: #ffeaea !important; color: #000 !important; }
+    .table-index-warning td { background-color: #ffcc80 !important; color: #000 !important; }
+
+    .hdr-arrow { font-weight: 700; margin-left: 6px; font-size: 0.9em; }
+
+    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
+#top5Floating {
+  position: fixed;
+  top: 120px;              /* jarak dari atas (di bawah header) */
+  left: 20px;              /* nempel kiri layar */
+  width: 260px;
+  z-index: 1000;
+}
+
+/* kecilkan font */
+#top5Floating th {
+  font-size: 0.75rem;
+}
+#top5Floating td {
+  font-size: 0.8rem;
+}
+
+/* sembunyikan di mobile */
+@media (max-width: 991px) {
+  #top5Floating {
+    display: none;
+  }
+}
+
+    @media (max-width: 600px){
+      .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
+      .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== FLOATING TOP 5 (OUTSIDE CONTAINER) ===== -->
 <div id="top5Floating">
   <div class="card shadow">
     <div class="card-header fw-bold text-center">
@@ -138,56 +189,6 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
   </div>
 </div>
 
-    /* ===== END MARQUEE ===== */
-
-    .content-area { padding:20px 25px; }
-    #judulLaporan { font-weight: 700; font-size: 18px; text-align: center; margin-bottom: 8px; color:#000; }
-    #resultTable td { text-align: center; vertical-align: middle; font-size: 0.95rem; }
-
-    #resultTable.table thead tr th {
-      background-color: #1976d2 !important; color: #fff !important; text-align: center !important;
-      font-weight: 700; cursor: pointer; padding: 10px; user-select: none; vertical-align: middle;
-      border-color: #1565c0 !important;
-    }
-    #resultTable.table thead tr th:hover { background-color: #1565c0 !important; }
-    #resultArea.is-history thead tr th { background-color: #9e9e9e !important; border-color: #757575 !important; color: #fff !important; }
-
-    .table-danger td { background-color: #ffeaea !important; color: #000 !important; }
-    .table-index-warning td { background-color: #ffcc80 !important; color: #000 !important; }
-
-    .hdr-arrow { font-weight: 700; margin-left: 6px; font-size: 0.9em; }
-    
-#top5Floating {
-  position: fixed;
-  top: 120px;
-  left: 20px;
-  width: 260px;
-  z-index: 1000;
-}
-
-#top5Floating th {
-  font-size: 0.75rem;
-}
-#top5Floating td {
-  font-size: 0.8rem;
-}
-
-@media (max-width: 991px) {
-  #top5Floating {
-    display: none;
-  }
-}
-
-    #copyright { text-align: center; font-size: 13px; color: #666; margin: 18px 0; padding-bottom: 14px; }
-
-    @media (max-width: 600px){
-      .site-top .title { font-size:16px; } .site-top { padding:10px; gap:10px; } .content-area { padding:12px; }
-      .marquee { font-size:13px; --marquee-duration: 11s; } #resultTable td { font-size: 0.85rem; }
-    }
-  </style>
-</head>
-
-<body>
   <button class="theme-toggle-float" id="themeToggle" title="Ganti Mode">
     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
         <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
@@ -380,36 +381,6 @@ function ambilJamDariTanggal(s){ if(!s) return "-"; const m = s.match(/(\d{1,2})
 function jamMenitDariTanggal(s){ const m = (s||"").match(/(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?/); if(!m) return null; return { h: parseInt(m[1],10), m: parseInt(m[2],10) }; }
 function prettyTanggalLabel(value){ if(typeof value === "string" && value.includes("T")){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} if(typeof value === "number"){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} return String(value||""); }
 function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-ID",{ day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }); }
-function renderTop5(results){
-  const tbody = document.getElementById("top5Table");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const top5 = results
-    .filter(r => r.res && r.res.avg !== null)
-    .sort((a,b)=> b.res.avg - a.res.avg)
-    .slice(0,5);
-
-  if(!top5.length){
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>`;
-    return;
-  }
-
-  top5.forEach(item=>{
-    const avg = Number(item.res.avg).toFixed(2);
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${item.k.nama}</td>
-      <td class="text-center">${item.k.shift || '-'}</td>
-      <td class="text-center fw-bold">${avg}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
 
 /* ====== Parse tolerant tanggal+waktu dari CSV ====== */
 function parseDateTime(s){
@@ -495,22 +466,6 @@ async function loadHistory(){
     rows: h.rows || h.RowsJson || h.rowsJson || []
   }));
 }
-  function saveTop5ToStorage(results){
-  localStorage.setItem("lastTop5IDX", JSON.stringify({
-    ts: Date.now(),
-    data: results.slice(0,5)
-  }));
-}
-function loadTop5FromStorage(){
-  const raw = localStorage.getItem("lastTop5IDX");
-  if(!raw) return;
-
-  const parsed = JSON.parse(raw);
-  if(parsed && parsed.data){
-    renderTop5(parsed.data);
-  }
-}
-
 function showHistoryModal(){ renderHistoryList(); const modal = new bootstrap.Modal(document.getElementById("historyModal")); modal.show(); }
 async function renderHistoryList(){
   const list = document.getElementById("historyList");
@@ -541,10 +496,6 @@ async function renderHistoryList(){
           }
         }));
         renderTable(lastResults);
-        const harianResults = hitungIndexHarian();
-renderTop5(harianResults);
-saveTop5ToStorage(harianResults);
-
         const judul = document.getElementById("judulLaporan");
         judul.classList.add("is-history");
         document.getElementById("resultArea").classList.add("is-history");
@@ -558,9 +509,6 @@ saveTop5ToStorage(harianResults);
     list.innerHTML = `<div class="text-danger">Gagal memuat history: ${err.message}</div>`;
   }
 }
-document.addEventListener("DOMContentLoaded", ()=>{
-  loadTop5FromStorage();
-});
 
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
@@ -681,6 +629,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
         const statusSlaRaw = getCol(r,['statussla','status sla']);
         const tglDiambilRaw = getCol(r,['tanggaldiambil','tgl diambil','tanggal diambil']);
         const tipeLokasiRaw = getCol(r,['tipelokasiasal','tipe lokasi asal']);
+        const kodeLokasiTujuanRaw = getCol(r,['kodelokasitujuan','kode lokasi tujuan']);
         const umurRaw = getCol(r,['umurkomplain','umur komplain','umur']);
         const slaNum = parseFloat((waktuSlaRaw||"").replace(",","."))||0;
         return {
@@ -693,6 +642,7 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
           statusSLA: statusSlaRaw,
           tanggalDiambil: tglDiambilRaw,
           tipeLokasi: (tipeLokasiRaw||"").trim(),
+          kodeLokasiTujuan: (kodeLokasiTujuanRaw || "").trim().toUpperCase(),
           umurRaw: (umurRaw||"").toString()
         };
       });
@@ -705,6 +655,32 @@ document.getElementById("csvFile").addEventListener("change",(e)=>{
       }
       document.getElementById("statusText").textContent = `File CSV terbaca: ${csvData.length} baris.`;
       kirimCsvKeGoogleSheetDATA(res.data);
+      // ===== AUTO TOP 5 KHUSUS MODE IDX =====
+if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") {
+
+  if(!sheetData.length) {
+    sheetData = buildUniqueNamesFromCSV(csvData);
+  }
+
+  if(sheetData.length){
+    const results = sheetData.map(k => ({
+      k,
+      res: rataRata_byName(k.nama)
+    }));
+
+    results.sort((a,b)=>{
+      const av = a.res.avg ?? -Infinity;
+      const bv = b.res.avg ?? -Infinity;
+      return bv - av;
+    });
+
+    lastResults = results;
+
+    renderTop5(results);   // 🔥 ISI PANEL KIRI
+  }
+}
+
+
     }});
 });
 
@@ -770,6 +746,7 @@ function rataRata_byName(nama,thr=0.85){
   const matches=[];
   const keyNama = normalizeName(nama);
   for(const r of csvData){
+    if (r.kodeLokasiTujuan !== "RE03") continue;
     if(!isAcceptedStatus(r.statusNorm)) continue;
     if(r.tipeLokasi && r.tipeLokasi.trim().toLowerCase()==="branch") continue;
     if(!lolosFilterShiftSiangByTanggalDiambil(r)) continue;
@@ -881,7 +858,10 @@ document.getElementById("generateBtn").addEventListener("click", async ()=>{
   sortAscIndexCO = false;
 
   lastResults = results;
-  renderTable(results);
+
+renderTop5(results);   // 🔥 ISI TOP 5
+renderTable(results);  // tabel utama
+
 
   const tgl = document.getElementById("tanggalCek").textContent;
   const judul = document.getElementById("judulLaporan");
@@ -956,6 +936,48 @@ function renderTable(results){
   ["Nama","LastCO","IndexCO","TotalCO","SLA","DurasiSLA","InProgress","RelasiResolved"].forEach(k=>{
     const el = document.getElementById(`sort${k}`);
     if(el) el.onclick = () => sortColumn(k);
+  });
+}
+function renderTop5(results){
+  const tbody = document.getElementById("top5Table");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const top5 = results
+    .filter(r => r.res && r.res.avg !== null)
+    .sort((a,b) => {
+      const av = Number.isFinite(Number(a.res.avg)) ? Number(a.res.avg) : -Infinity;
+      const bv = Number.isFinite(Number(b.res.avg)) ? Number(b.res.avg) : -Infinity;
+      return bv - av;
+    })
+    .slice(0,5);
+
+  if(!top5.length){
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>`;
+    return;
+  }
+
+  top5.forEach(item=>{
+    const avgNum = Number(item.res.avg);
+    const avg = Number.isFinite(avgNum) ? avgNum.toFixed(2) : "-";
+
+    const tr = document.createElement("tr");
+
+    if ((item.res.slaCount || 0) > 0) {
+      tr.classList.add("table-danger");
+    } else if (avgNum > 0.35) {
+      tr.classList.add("table-index-warning");
+    }
+
+    tr.innerHTML = `
+      <td>${escapeHtml(item.k.nama)}</td>
+      <td class="text-center">${escapeHtml(item.k.shift || 'IDX')}</td>
+      <td class="text-center fw-bold">${avg}</td>
+    `;
+
+    tbody.appendChild(tr);
   });
 }
 
@@ -1200,6 +1222,9 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
+
+
 
 
 
