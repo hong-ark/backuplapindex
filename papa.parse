@@ -707,15 +707,11 @@ if (document.getElementById("shiftInput").value.trim().toUpperCase() === "IDX") 
     sheetData = buildUniqueNamesFromCSV(csvData);
   }
 
-  if(sheetData.length){
-    const harianResults = hitungIndexHarian();
-renderTop5(harianResults);
-saveTop5ToStorage(harianResults);
-
-
-    
-
-    lastResults = results;
+ if(sheetData.length){
+  const harianResults = hitungIndexHarian();
+  renderTop5(harianResults);
+  saveTop5ToStorage(harianResults);
+}
 
    
   }
@@ -1338,6 +1334,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
