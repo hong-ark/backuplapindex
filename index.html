@@ -356,7 +356,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx4dWdi4tSGqHN3WQ89Za1wyklGj1eLfcNPwqBeLa15aLUKrzjncKvySo07-9GuqxPD0g/exec";
 const HISTORY_GAS_URL = "https://script.google.com/macros/s/AKfycbwrXZlIB4nyiQtb-MM79c8rm1rDuoVyEZRxdk4-yTHaM_teOWR-XxC_BK50RsVlmo-P/exec";
 const DATA_GAS_URL = "https://script.google.com/macros/s/AKfycbxTsw4JoQfyVcS9JE3e33VayBckQ8IIztoAEoHq9XhvEkcUz90f70IEGXxsdB2mSjlgdg/exec"; // SHEET = DATA
-const TOP5_STORAGE_KEY = "top5IndexHariIni";
+const TOP5_GAS_URL = HISTORY_GAS_URL;
 
 
 let sheetData = [], csvData = [], lastResults = [];
@@ -416,21 +416,7 @@ function saveTop5ToStorage(rows){
   }
 }
 
-function loadTop5FromStorage(){
-  try {
-    const raw = localStorage.getItem(TOP5_STORAGE_KEY);
-    if(!raw) return null;
-    const parsed = JSON.parse(raw);
-    if(!parsed || !Array.isArray(parsed.data)) return null;
-    return parsed;
-  } catch(e){
-    console.warn("Gagal load Top 5:", e);
-    console.log("CSV length:", csvData.length);
-console.log("Sample CSV row:", csvData[0]);
 
-    return null;
-  }
-}
 
 /* ====== Parse tolerant tanggal+waktu dari CSV ====== */
 function parseDateTime(s){
@@ -507,6 +493,19 @@ async function saveHistoryEntry(entry){
     console.warn("saveHistoryEntry failed:", e);
   }
 }
+  async function loadTop5FromServer(){
+  try{
+    const res = await fetch(`${TOP5_GAS_URL}?action=getTop5`);
+    const json = await res.json();
+    if(json.ok && Array.isArray(json.data)){
+      return json.data;
+    }
+  }catch(e){
+    console.warn("Gagal load Top5 dari server:", e);
+  }
+  return [];
+}
+
 async function loadHistory(){
   const url = `${HISTORY_GAS_URL}?action=getHistory`;
   const res = await fetch(url);
@@ -560,8 +559,22 @@ async function renderHistoryList(){
     list.innerHTML = `<div class="text-danger">Gagal memuat history: ${err.message}</div>`;
   }
 }
+async function saveTop5ToServer(rows){
+  try{
+    await fetch(TOP5_GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "saveTop5",
+        data: rows
+      })
+    });
+  }catch(e){
+    console.warn("Gagal simpan Top5 ke server:", e);
+  }
+}
 
-/* ====== CSV LOAD ====== */
+
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
@@ -1097,19 +1110,14 @@ function renderTop5Rows(rows, tbody, ts = null){
       .sort((a,b)=> b.avg - a.avg)
       .slice(0,5);
 
-    if(rows.length){
-      saveTop5ToStorage(rows);
-      renderTop5Rows(rows, tbody);
-      return;
-    }
-  }
+  if(rows.length){
+  saveTop5ToServer(rows);   // ⬅️ SERVER
+  renderTop5Rows(rows, tbody);
+  return;
+}
 
-  // ===== FALLBACK: LOAD DARI LOCALSTORAGE =====
-  const saved = loadTop5FromStorage();
-  if(saved && saved.data.length){
-    renderTop5Rows(saved.data, tbody, saved.ts);
-    return;
-  }
+
+ 
 
   // ===== TIDAK ADA APA-APA =====
   tbody.innerHTML = `
@@ -1300,6 +1308,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
