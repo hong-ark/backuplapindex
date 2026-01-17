@@ -381,7 +381,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
   updateToggleSiangAvailability();
   loadLastUpdate();
-  renderTop5IndexHariIni();
+
   setInterval(loadLastUpdate, 600000);
 });
 
@@ -1045,11 +1045,8 @@ function sortColumn(key){
     count: rows.length
   };
 }
-function renderTop5IndexHariIni(){
-  const tbody = document.getElementById("top5Table");
-  if(!tbody) return;
 
-  tbody.innerHTML = "";
+<script>
 function renderTop5IndexHariIni(){
   const tbody = document.getElementById("top5Table");
   if(!tbody) return;
@@ -1091,6 +1088,8 @@ function renderTop5IndexHariIni(){
       </td>
     </tr>`;
 }
+</script>
+
 
   // ===== JIKA CSV ADA → HITUNG ULANG & SIMPAN =====
   if(csvData.length){
@@ -1311,6 +1310,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
