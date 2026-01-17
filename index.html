@@ -283,8 +283,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
   <button id="generateBtn" class="btn btn-success" disabled>
     Hitung Index
   </button>
-  <span id="progressContainer" class="d-none fw-bold text-success" style="font-size: 14px;">
-    Uploading: <span id="progressPercent">0%</span>
+  
   </span>
   <span id="statusText" class="text-muted"></span>
 </div>
@@ -1051,31 +1050,46 @@ function renderTop5IndexHariIni(){
   if(!tbody) return;
 
   tbody.innerHTML = "";
-function renderTop5Rows(rows, tbody, ts = null){
-  rows.forEach(r=>{
-    const tr = document.createElement("tr");
+function renderTop5IndexHariIni(){
+  const tbody = document.getElementById("top5Table");
+  if(!tbody) return;
 
-    if (r.avg > 0.35){
-      tr.classList.add("table-index-warning");
+  tbody.innerHTML = "";
+
+  if(csvData.length){
+    const nameMap = new Map();
+
+    for(const r of csvData){
+      if(r.kodeLokasiTujuan !== "RE03") continue;
+      const nm = (r.diambilOleh||"").trim();
+      if(!nm) continue;
+      const key = normalizeName(nm);
+      if(!nameMap.has(key)) nameMap.set(key, nm);
     }
 
-    tr.innerHTML = `
-      <td>${escapeHtml(r.nama)}</td>
-      <td class="text-center">${r.count}</td>
-      <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
-    `;
+    const rows = Array.from(nameMap.values())
+      .map(nama=>{
+        const res = hitungIndexHarianByNama(nama);
+        if(!res.count || res.avg === null) return null;
+        return { nama, count: res.count, avg: res.avg };
+      })
+      .filter(Boolean)
+      .sort((a,b)=> b.avg - a.avg)
+      .slice(0,5);
 
-    tbody.appendChild(tr);
-  });
-
-  if(ts){
-    const info = document.createElement("tr");
-    info.innerHTML = `
-      <td colspan="3" class="text-center text-muted" style="font-size:11px">
-        Last update: ${new Date(ts).toLocaleString("id-ID")}
-      </td>`;
-    tbody.appendChild(info);
+    if(rows.length){
+      saveTop5ToServer(rows);
+      renderTop5Rows(rows, tbody);
+      return;
+    }
   }
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center text-muted">
+        Upload CSV untuk melihat Top 5
+      </td>
+    </tr>`;
 }
 
   // ===== JIKA CSV ADA → HITUNG ULANG & SIMPAN =====
@@ -1297,6 +1311,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
