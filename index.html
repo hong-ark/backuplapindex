@@ -404,17 +404,7 @@ function ambilJamDariTanggal(s){ if(!s) return "-"; const m = s.match(/(\d{1,2})
 function jamMenitDariTanggal(s){ const m = (s||"").match(/(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?/); if(!m) return null; return { h: parseInt(m[1],10), m: parseInt(m[2],10) }; }
 function prettyTanggalLabel(value){ if(typeof value === "string" && value.includes("T")){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} if(typeof value === "number"){ const d = new Date(value); if(!isNaN(d)) return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});} return String(value||""); }
 function prettyDateTime(ts){ const d=new Date(ts); return d.toLocaleString("id-ID",{ day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }); }
-function saveTop5ToStorage(rows){
-  try {
-    const payload = {
-      ts: Date.now(),
-      data: rows
-    };
-    localStorage.setItem(TOP5_STORAGE_KEY, JSON.stringify(payload));
-  } catch(e){
-    console.warn("Gagal simpan Top 5:", e);
-  }
-}
+
 
 
 
@@ -1127,7 +1117,6 @@ function renderTop5Rows(rows, tbody, ts = null){
       </td>
     </tr>`;
 }
-
 /* ====== DOWNLOAD JPG ====== */
 const downloadBtn = document.getElementById("downloadBtn");
 if (downloadBtn) {
@@ -1308,6 +1297,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
