@@ -157,6 +157,23 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     display: none;
   }
 }
+/* ===== FLOATING LEFT WRAPPER ===== */
+#floatingLeft {
+  position: fixed;
+  top: 120px;
+  left: 20px;
+  width: 260px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* JARAK ANTAR CARD */
+}
+
+/* card tetap normal */
+#top5Floating,
+#top5SlaFloating {
+  position: static; /* PENTING */
+}
 
 /* ===== FLOATING TOP 5 ===== */
 #top5Floating {
@@ -195,7 +212,8 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
 <body>
   <script async src="https://tenor.com/embed.js"></script>
   <!-- ===== FLOATING TOP 5 INDEX HARI INI ===== -->
-<div id="top5Floating">
+  <div id="floatingLeft">
+ <div id="top5Floating">
    <!-- GIF TENOR -->
     <div class="p-2">
       <div class="tenor-gif-embed"
@@ -209,7 +227,7 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
       </div>
     </div>
   <!-- ===== FLOATING TOP 5 SLA BULAN INI ===== -->
-<div id="top5SlaFloating">
+ <div id="top5SlaFloating">
   <div class="card shadow border-danger">
     <div class="card-header fw-bold text-center bg-danger text-white">
       🚨 Top 5 SLA Bulan Ini
@@ -1388,6 +1406,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
