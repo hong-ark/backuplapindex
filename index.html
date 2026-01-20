@@ -210,7 +210,40 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
   </div>
 </div>
   <!-- ===== TOP 5 SLA BULAN INI ===== -->
-  <div class="card shadow mt-2">
+  <!-- ===== FLOATING TOP 5 ===== -->
+<div id="top5Floating">
+
+  <!-- GIF -->
+  <div class="p-2">
+    <div class="tenor-gif-embed"
+         data-postid="20098859"
+         data-share-method="host"
+         data-aspect-ratio="0.959375"
+         data-width="100%">
+    </div>
+  </div>
+
+  <!-- TOP 5 INDEX -->
+  <div class="card shadow mb-2">
+    <div class="card-header fw-bold text-center">
+      🔥 Top 5 Index Hari Ini
+    </div>
+    <div class="card-body p-2">
+      <table class="table table-sm table-bordered mb-0">
+        <thead class="table-primary text-center">
+          <tr>
+            <th>Nama</th>
+            <th>Total CO</th>
+            <th>Index</th>
+          </tr>
+        </thead>
+        <tbody id="top5Table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ✅ TOP 5 SLA (SEKARANG SUDAH FLOATING) -->
+  <div class="card shadow">
     <div class="card-header fw-bold text-center bg-danger text-white">
       ⏱️ Top 5 SLA Bulan Ini
     </div>
@@ -222,16 +255,13 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
             <th>SLA Lewat</th>
           </tr>
         </thead>
-        <tbody id="top5SlaTable">
-          <tr>
-            <td colspan="2" class="text-center text-muted">
-              Memuat data...
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="top5SlaTable"></tbody>
       </table>
     </div>
   </div>
+
+</div> <!-- ✅ PENUTUP TOP5FLOATING PINDAH KE SINI -->
+
 
   <button class="theme-toggle-float" id="themeToggle" title="Ganti Mode">
     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -1371,6 +1401,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
