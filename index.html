@@ -1028,11 +1028,11 @@ function sortColumn(key){
   const key = normalizeName(nama);
 
   const rows = csvData.filter(r =>
-    r.kodeLokasiTujuan === "RE03" &&
-    normalizeName(r.diambilOleh) === key &&
-    r.statusNorm.includes("inprogress")
-    isAcceptedStatus(r.statusNorm)
-  );
+  r.kodeLokasiTujuan === "RE03" &&
+  normalizeName(r.diambilOleh) === key &&
+  isAcceptedStatus(r.statusNorm)
+);
+
 
   if(!rows.length){
     return { avg: null, count: 0 };
@@ -1060,7 +1060,7 @@ function renderTop5Rows(rows, tbody, ts = null){
     tr.innerHTML = `
   <td>${escapeHtml(r.nama)}</td>
   <td class="text-center">${r.count}</td>
-  <td class="text-center">${r.inPrg || 0}</td>
+  <td class="text-center">${r.inPrg ?? 0}</td>
   <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
 `;
 <td class="text-center">${r.inPrg ?? 0}</td>
@@ -1090,18 +1090,21 @@ function renderTop5Rows(rows, tbody, ts = null){
     }
 
     const rows = Array.from(nameMap.values())
-      .map(nama=>{
-        const inPrg = hitungInProgressHarianByNama(nama);
-        if(!res.count || res.avg === null) return null;
-        return {
-  nama,
-  count: res.count,
-  inPrg,
-  avg: res.avg
-};
-      .filter(Boolean)
-      .sort((a,b)=> b.avg - a.avg)
-      .slice(0,5);
+  .map(nama=>{
+    const res = hitungIndexHarianByNama(nama);
+    if(!res.count || res.avg === null) return null;
+
+    return {
+      nama,
+      count: res.count,
+      inPrg: hitungInProgressHarianByNama(nama),
+      avg: res.avg
+    };
+  })
+  .filter(Boolean)
+  .sort((a,b)=> b.avg - a.avg)
+  .slice(0,5);
+
 
     if(rows.length){
       saveTop5ToStorage(rows);
@@ -1120,7 +1123,7 @@ function renderTop5Rows(rows, tbody, ts = null){
   // ===== TIDAK ADA APA-APA =====
   tbody.innerHTML = `
     <tr>
-      <td colspan="3" class="text-center text-muted">
+      <td colspan="4" class="text-center text-muted">
         Upload CSV untuk melihat Top 5
       </td>
     </tr>`;
@@ -1306,6 +1309,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
