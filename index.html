@@ -192,13 +192,12 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
     <div class="card-body p-2">
       <table class="table table-sm table-bordered mb-0">
         <thead class="table-primary text-center">
-  <tr>
-    <th>Nama</th>
-    <th>Total CO</th>
-    <th>InPrg</th>
-    <th>Index</th>
-  </tr>
-</thead>
+          <tr>
+            <th>Nama</th>
+            <th>Total CO</th>
+            <th>Index</th>
+          </tr>
+        </thead>
         <tbody id="top5Table">
           <tr>
             <td colspan="3" class="text-center text-muted">
@@ -290,6 +289,11 @@ body { background: var(--bg-body) !important; color: var(--text-main); transitio
   <span id="statusText" class="text-muted"></span>
 </div>
   <!-- KANAN -->
+       <a href="http://192.168.26.26:5000/"
+     target="_blank"
+     class="btn btn-outline-primary">
+     📦 Monitoring Pesanan
+  </a>
   <a href="https://hong-ark.github.io/laporanindex/search.html"
      target="_blank"
      class="btn btn-outline-success">
@@ -562,6 +566,7 @@ async function renderHistoryList(){
   }
 }
 
+/* ====== CSV LOAD ====== */
   /* ====== CSV LOAD ====== */
 async function kirimCsvKeGoogleSheetDATA(csvRows) {
   if (!csvRows || !csvRows.length) return;
@@ -1027,12 +1032,11 @@ function sortColumn(key){
   function hitungIndexHarianByNama(nama){
   const key = normalizeName(nama);
 
-  return csvData.filter(r =>
-  r.kodeLokasiTujuan === "RE03" &&
-  normalizeName(r.diambilOleh) === key &&
-   r.statusNorm.includes("inprogress")
-  ).length;
-}
+  const rows = csvData.filter(r =>
+    r.kodeLokasiTujuan === "RE03" &&
+    normalizeName(r.diambilOleh) === key &&
+    isAcceptedStatus(r.statusNorm)
+  );
 
   if(!rows.length){
     return { avg: null, count: 0 };
@@ -1058,11 +1062,11 @@ function renderTop5Rows(rows, tbody, ts = null){
     }
 
     tr.innerHTML = `
-  <td>${escapeHtml(r.nama)}</td>
-  <td class="text-center">${r.count}</td>
-  <td class="text-center">${r.inPrg ?? 0}</td>
-  <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
-`;
+      <td>${escapeHtml(r.nama)}</td>
+      <td class="text-center">${r.count}</td>
+      <td class="text-center fw-bold">${r.avg.toFixed(2)}</td>
+    `;
+
     tbody.appendChild(tr);
   });
 
@@ -1089,20 +1093,14 @@ function renderTop5Rows(rows, tbody, ts = null){
     }
 
     const rows = Array.from(nameMap.values())
-  .map(nama=>{
-    const res = hitungIndexHarianByNama(nama);
-    if(!res.count || res.avg === null) return null;
-
-    return {
-      nama,
-      count: res.count,
-      avg: res.avg
-    };
-  })
-  .filter(Boolean)
-  .sort((a,b)=> b.avg - a.avg)
-  .slice(0,5);
-
+      .map(nama=>{
+        const res = hitungIndexHarianByNama(nama);
+        if(!res.count || res.avg === null) return null;
+        return { nama, count: res.count, avg: res.avg };
+      })
+      .filter(Boolean)
+      .sort((a,b)=> b.avg - a.avg)
+      .slice(0,5);
 
     if(rows.length){
       saveTop5ToStorage(rows);
@@ -1121,7 +1119,7 @@ function renderTop5Rows(rows, tbody, ts = null){
   // ===== TIDAK ADA APA-APA =====
   tbody.innerHTML = `
     <tr>
-      <td colspan="4" class="text-center text-muted">
+      <td colspan="3" class="text-center text-muted">
         Upload CSV untuk melihat Top 5
       </td>
     </tr>`;
@@ -1307,9 +1305,6 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
-
-
 
 
 
